@@ -1,0 +1,81 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: capitalize;
+    transition: all var(--transition-fast);
+}
+
+.indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Status Colors */
+.pending {
+    background: hsla(210, 50%, 60%, 0.15);
+    color: var(--color-pending);
+    border: 1px solid hsla(210, 50%, 60%, 0.3);
+}
+
+.pending .indicator {
+    background: var(--color-pending);
+}
+
+.running {
+    background: hsla(45, 93%, 58%, 0.15);
+    color: var(--color-warning);
+    border: 1px solid hsla(45, 93%, 58%, 0.3);
+}
+
+.running .indicator {
+    background: var(--color-warning);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.completed {
+    background: hsla(142, 76%, 55%, 0.15);
+    color: var(--color-success);
+    border: 1px solid hsla(142, 76%, 55%, 0.3);
+}
+
+.completed .indicator {
+    background: var(--color-success);
+    animation: none;
+}
+
+.error {
+    background: hsla(0, 84%, 60%, 0.15);
+    color: var(--color-error);
+    border: 1px solid hsla(0, 84%, 60%, 0.3);
+}
+
+.error .indicator {
+    background: var(--color-error);
+    animation: none;
+}
+
+/* Risk Colors */
+.low {
+    background: hsla(142, 60%, 50%, 0.15);
+    color: var(--color-risk-low);
+    border: 1px solid hsla(142, 60%, 50%, 0.3);
+}
+
+.medium {
+    background: hsla(45, 85%, 55%, 0.15);
+    color: var(--color-risk-medium);
+    border: 1px solid hsla(45, 85%, 55%, 0.3);
+}
+
+.high {
+    background: hsla(0, 75%, 60%, 0.15);
+    color: var(--color-risk-high);
+    border: 1px solid hsla(0, 75%, 60%, 0.3);
+}
