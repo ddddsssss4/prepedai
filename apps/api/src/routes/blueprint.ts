@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { chat } from '../lib/llm';
+import { chatStream } from '../lib/llm';
 import { buildBlueprintPrompt, BLUEPRINT_SYSTEM_PROMPT } from '../prompts/blueprint.prompt';
 
 const router = Router();
@@ -15,30 +15,27 @@ router.post('/', async (req: Request, res: Response) => {
 
         const prompt = buildBlueprintPrompt(intent, architecture, database, api);
 
-        // Use non-streaming chat to get complete JSON response
-        const response = await chat(prompt, {
-            systemPrompt: BLUEPRINT_SYSTEM_PROMPT,
-            model: 'qwen2.5-coder-7b-instruct'
-        });
+        // We stream the JSON response
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
 
-        // Try to parse the response as JSON
         try {
-            // Clean markdown code blocks if present
-            let jsonString = response.trim();
-            const match = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (match) {
-                jsonString = match[1].trim();
+            const stream = chatStream(prompt, {
+                systemPrompt: BLUEPRINT_SYSTEM_PROMPT,
+                model: 'qwen2.5-coder-7b-instruct'
+            });
+
+            for await (const chunk of stream) {
+                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
             }
 
-            const parsed = JSON.parse(jsonString);
-            res.json(parsed);
-        } catch (parseError) {
-            console.error('Failed to parse LLM response as JSON:', parseError);
-            console.error('Raw response:', response);
-            res.status(500).json({
-                error: 'Failed to parse blueprint response',
-                raw: response
-            });
+            res.write('data: [DONE]\n\n');
+            res.end();
+        } catch (error) {
+            console.error('Blueprint generation error:', error);
+            res.write(`data: ${JSON.stringify({ error: 'Failed to generate blueprint' })}\n\n`);
+            res.end();
         }
 
     } catch (error) {
