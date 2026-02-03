@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { Plan, Phase, Step, Screen, Clarification, ClarificationStatus, CodingAgent } from '../types/schemas';
-import { generatePlan } from '../utils/planGenerator';
+
 import { executePlan } from '../utils/executor';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -168,7 +168,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         const { intent } = get();
         if (!intent.trim()) return;
 
-        const newPlan = generatePlan(intent);
+        // Create minimal plan structure - phases will be filled by blueprint generation
+        const newPlan = {
+            id: `plan-${Date.now()}`,
+            intent,
+            phases: [],
+            createdAt: new Date(),
+        };
         set({ plan: newPlan, currentScreen: 'planning' });
     },
 
@@ -231,7 +237,12 @@ export const useAppStore = create<AppState>((set, get) => ({
             architectureStream: { isStreaming: true, content: '', error: null },
         });
 
-        const basePlan = plan || generatePlan(intent);
+        const basePlan = plan || {
+            id: `plan-${Date.now()}`,
+            intent,
+            phases: [],
+            createdAt: new Date(),
+        };
         set({ plan: basePlan });
 
         await consumeSSEStream(
