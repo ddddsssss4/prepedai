@@ -153,7 +153,7 @@ export function ApiTab() {
                 <Button
                     size="lg"
                     onClick={streamApiDesign}
-                    className="mt-4 gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                    className="mt-4 gap-2"
                 >
                     Generate API Design
                     <ArrowRight className="h-4 w-4" />

@@ -150,6 +150,13 @@ export function ArchitectureTab() {
         const mermaidCode = mermaidMatch ? mermaidMatch[1].trim() : null;
         const contentWithoutMermaid = content.replace(/```mermaid[\s\S]*?```/g, '');
 
+        // Debug logging
+        console.log('[ArchitectureTab] Streaming content length:', content.length);
+        console.log('[ArchitectureTab] Mermaid match found:', !!mermaidMatch);
+        if (mermaidCode) {
+            console.log('[ArchitectureTab] Mermaid code:', mermaidCode.substring(0, 100) + '...');
+        }
+
         const isComplete = !isStreaming && content.length > 0;
 
         return (
@@ -223,7 +230,7 @@ export function ArchitectureTab() {
                                 </p>
                                 <Button
                                     onClick={streamDatabase}
-                                    className="w-full gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                                    className="w-full gap-2"
                                 >
                                     Generate Database
                                     <ArrowRight className="h-4 w-4" />

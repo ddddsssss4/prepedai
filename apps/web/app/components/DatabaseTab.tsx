@@ -149,7 +149,7 @@ export function DatabaseTab() {
                 <Button
                     size="lg"
                     onClick={streamDatabase}
-                    className="mt-4 gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                    className="mt-4 gap-2"
                 >
                     Generate Database Schema
                     <ArrowRight className="h-4 w-4" />
@@ -164,6 +164,13 @@ export function DatabaseTab() {
         const mermaidMatch = content.match(/```mermaid\s*([\s\S]*?)```/);
         const mermaidCode = mermaidMatch ? mermaidMatch[1].trim() : null;
         const contentWithoutMermaid = content.replace(/```mermaid[\s\S]*?```/g, '');
+
+        // Debug logging
+        console.log('[DatabaseTab] Content length:', content.length);
+        console.log('[DatabaseTab] Mermaid match found:', !!mermaidMatch);
+        if (mermaidCode) {
+            console.log('[DatabaseTab] ERD code:', mermaidCode.substring(0, 100) + '...');
+        }
 
         const isComplete = !isStreaming && content.length > 0;
 
@@ -238,7 +245,7 @@ export function DatabaseTab() {
                                 </p>
                                 <Button
                                     onClick={streamApiDesign}
-                                    className="w-full gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                                    className="w-full gap-2"
                                 >
                                     Generate API Design
                                     <ArrowRight className="h-4 w-4" />
