@@ -46,10 +46,11 @@ function sanitizeMermaidChart(chart: string): string {
         return `["${content}"]`;
     });
 
-    // Also handle parentheses that aren't matched: just remove them from labels
-    // This is a fallback for edge cases
+    // Fix erDiagram attributes with multiple qualifiers (PK FK together is invalid)
+    // Change "type name PK FK" to "type name FK" (keep FK, drop PK for junction tables)
+    clean = clean.replace(/(\w+\s+\w+)\s+PK\s+FK/g, '$1 FK');
 
-    console.log('[Mermaid] Sanitized chart:', clean);
+    console.log('[Mermaid] Sanitized chart:', clean.substring(0, 200) + '...');
     return clean;
 }
 

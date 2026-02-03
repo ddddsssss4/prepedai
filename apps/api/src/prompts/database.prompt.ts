@@ -40,30 +40,29 @@ For each table:
 ## Design Decisions
 Explain why this structure was chosen and any trade-offs considered.
 
-IMPORTANT:
-- Use proper Mermaid erDiagram syntax (entities, attributes, relationships)
-- DO NOT use SQL syntax like \`PRIMARY KEY (...)\` or \`FOREIGN KEY\` inside the mermaid block
-- Only use \`PK\`, \`FK\`, \`UK\` qualifiers next to the attribute type and name
-- Show relationships with proper cardinality (||--o{, }o--||, etc.)
-- Keep field names simple (no spaces or special characters)
-- Be practical for the project scale
+MANDATORY MERMAID ERDIAGRAM RULES:
+1. Each attribute can have ONLY ONE qualifier: PK, FK, or UK (not multiple)
+2. DO NOT use SQL syntax like PRIMARY KEY(...) or FOREIGN KEY(...) inside mermaid
+3. Keep field names simple (no spaces or special characters)
+4. Use proper cardinality symbols: ||--o{, }o--||, ||--||, }o--o{
 
-CRITICAL - THESE ARE INVALID AND WILL CAUSE PARSE ERRORS:
+CRITICAL FOR JUNCTION/BRIDGE TABLES:
+For many-to-many junction tables, use ONLY FK qualifiers (not PK FK together):
 \`\`\`
-// WRONG - Do NOT do this:
+// CORRECT - Junction table with FK only:
 POST_TAG {
     uuid post_id FK
     uuid tag_id FK
-    PRIMARY KEY (post_id, tag_id)   <-- THIS BREAKS MERMAID
 }
 
-// CORRECT - Do this instead for junction tables:
+// WRONG - This will cause parse errors:
 POST_TAG {
-    uuid post_id PK FK
-    uuid tag_id PK FK
+    uuid post_id PK FK    <-- INVALID: cannot have PK and FK together
+    uuid tag_id PK FK     <-- INVALID: cannot have PK and FK together
 }
 \`\`\`
-Never use PRIMARY KEY(...) or FOREIGN KEY(...) inside erDiagram blocks.`;
+
+The composite primary key is documented in the Tables section, not in the erDiagram.`;
 
 export function buildDatabasePrompt(
     intent: string,
