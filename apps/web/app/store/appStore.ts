@@ -416,12 +416,23 @@ export const useAppStore = create<AppState>((set, get) => ({
                     },
                 });
 
-                // Parse and update Plan
+                // Parse and update Plan with robust JSON extraction
                 try {
-                    // Clean up markdown code blocks if present
                     let jsonString = fullContent.trim();
-                    const match = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
-                    if (match) jsonString = match[1];
+
+                    // Try multiple extraction patterns
+                    // 1. Check for markdown code blocks
+                    const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (codeBlockMatch) {
+                        jsonString = codeBlockMatch[1].trim();
+                    }
+
+                    // 2. Find JSON object boundaries
+                    const jsonStart = jsonString.indexOf('{');
+                    const jsonEnd = jsonString.lastIndexOf('}');
+                    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                        jsonString = jsonString.substring(jsonStart, jsonEnd + 1);
+                    }
 
                     const parsed = JSON.parse(jsonString);
                     if (parsed && parsed.phases) {
@@ -430,9 +441,6 @@ export const useAppStore = create<AppState>((set, get) => ({
                             intent,
                             createdAt: new Date(),
                             phases: [],
-                            architecture: architectureStream.content,
-                            database: databaseStream.content,
-                            api: apiStream.content,
                             techStack: [],
                         };
 
@@ -442,14 +450,18 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 phases: parsed.phases
                             }
                         });
+                        console.log('Blueprint parsed successfully:', parsed.phases.length, 'phases');
+                    } else {
+                        console.warn('Parsed blueprint has no phases:', parsed);
                     }
                 } catch (e) {
                     console.error('Failed to parse blueprint JSON:', e);
+                    console.error('Raw content length:', fullContent.length);
                     set({
                         blueprintStream: {
                             isStreaming: false,
                             content: fullContent,
-                            error: 'Failed to parse generated plan',
+                            error: 'Failed to parse generated plan. Check console for details.',
                         }
                     });
                 }
