@@ -2,11 +2,20 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store/appStore';
-import { suggestedPrompts } from '../utils/planGenerator';
 import { IntentSchema } from '../types/schemas';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
-import { ArrowRight, AlertCircle, Zap } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Zap, Code, Send, AlertCircle } from 'lucide-react';
+
+// Suggested prompts for users
+const suggestedPrompts = [
+    'Add authentication to my web app',
+    'Refactor the dashboard component',
+    'Create a new user profile feature',
+    'Fix the data fetching bug',
+    'Add dark mode toggle',
+    'Implement form validation',
+];
 
 export default function IntentScreen() {
     const { setIntent, fetchClarifyingQuestions, setCurrentScreen, generatePlanFromIntent, intent } = useAppStore();

@@ -2,15 +2,12 @@
 
 import { useState } from 'react';
 import { useAppStore, GenerationStep } from '../store/appStore';
-import { Button } from '@/components/ui/button';
-import { PhaseCard } from './PhaseCard';
-import { StepDetailDialog } from './StepDetailDialog';
 import { ClarificationTab } from './ClarificationTab';
 import { ArchitectureTab } from './ArchitectureTab';
 import { DatabaseTab } from './DatabaseTab';
 import { ApiTab } from './ApiTab';
-import { Phase, Step } from '../types/schemas';
-import { Zap, HelpCircle, Layers, Database, Server, ListChecks, Lock } from 'lucide-react';
+import { BlueprintTab } from './BlueprintTab';
+import { HelpCircle, Layers, Database, Server, ListChecks, Lock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Define tab order for progressive unlock
@@ -23,18 +20,12 @@ function isTabUnlocked(tabStep: GenerationStep, currentStep: GenerationStep): bo
 }
 
 export default function PlanningScreen() {
-    const { plan, executePlanSteps, clarificationStatus, generationStep } = useAppStore();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
-    const [selectedStep, setSelectedStep] = useState<Step | null>(null);
+    const { generationStep } = useAppStore();
 
     // Default to clarification tab
     const [activeTab, setActiveTab] = useState('clarification');
 
-    if (!plan) return null;
 
-    const totalSteps = plan.phases.reduce((acc, phase) => acc + phase.steps.length, 0);
-    const totalFiles = plan.phases.reduce((acc, phase) => acc + (phase.filesInvolved?.length || 0), 0);
 
     return (
         <div className="flex flex-col min-h-[calc(100vh-100px)] w-full max-w-7xl mx-auto px-6 py-8">
@@ -114,59 +105,9 @@ export default function PlanningScreen() {
 
                 {/* BLUEPRINT TAB */}
                 <TabsContent value="blueprint" className="space-y-8 focus-visible:ring-0">
-                    {/* Main Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-                        {plan.phases.map((phase, index) => (
-                            <PhaseCard
-                                key={phase.id}
-                                phase={phase}
-                                index={index}
-                                onStepClick={(stepId) => {
-                                    setSelectedPhase(phase);
-                                    setSelectedStep(phase.steps.find(s => s.id === stepId) || null);
-                                    setIsDialogOpen(true);
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Footer Stats & Action */}
-                    <div className="mt-auto space-y-12">
-                        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto text-center border-t border-white/5 pt-12">
-                            <div className="space-y-2">
-                                <div className="text-4xl font-bold">{plan.phases.length}</div>
-                                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Phases</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="text-4xl font-bold">{totalSteps}</div>
-                                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Steps</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="text-4xl font-bold">{totalFiles}</div>
-                                <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Files</div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-center">
-                            <Button
-                                size="lg"
-                                className="group text-lg font-semibold gap-3 px-10 py-6 rounded-full bg-gradient-to-r from-primary via-purple-500 to-primary hover:shadow-[0_0_40px_rgba(var(--primary-rgb),0.4)] transition-all duration-300"
-                                onClick={executePlanSteps}
-                            >
-                                <Zap className="h-5 w-5 group-hover:animate-pulse" />
-                                Execute Full Blueprint
-                            </Button>
-                        </div>
-                    </div>
+                    <BlueprintTab />
                 </TabsContent>
             </Tabs>
-
-            <StepDetailDialog
-                isOpen={isDialogOpen}
-                onClose={() => setIsDialogOpen(false)}
-                step={selectedStep}
-                phase={selectedPhase}
-            />
         </div>
     );
 }

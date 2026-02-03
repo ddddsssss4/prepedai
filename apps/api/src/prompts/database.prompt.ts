@@ -41,8 +41,9 @@ For each table:
 Explain why this structure was chosen and any trade-offs considered.
 
 IMPORTANT:
-- Use proper Mermaid erDiagram syntax
-- Include PK, FK, UK annotations
+- Use proper Mermaid erDiagram syntax (entities, attributes, relationships)
+- DO NOT use SQL syntax like \`PRIMARY KEY (...)\` or \`FOREIGN KEY\` inside the mermaid block
+- Only use \`PK\`, \`FK\`, \`UK\` qualifiers next to the attribute type and name
 - Show relationships with proper cardinality (||--o{, }o--||, etc.)
 - Keep field names simple (no spaces or special characters)
 - Be practical for the project scale`;

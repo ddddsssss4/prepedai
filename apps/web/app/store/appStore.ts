@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { Plan, Phase, Step, Screen, Clarification, ClarificationStatus } from '../types/schemas';
+import { Plan, Phase, Step, Screen, Clarification, ClarificationStatus, CodingAgent } from '../types/schemas';
 import { generatePlan } from '../utils/planGenerator';
 import { executePlan } from '../utils/executor';
 
@@ -50,6 +50,10 @@ interface AppState {
     streamArchitecture: () => Promise<void>;
     streamDatabase: () => Promise<void>;
     streamApiDesign: () => Promise<void>;
+    streamBlueprint: () => Promise<void>;
+
+    // Blueprint Stream state
+    blueprintStream: StreamingState;
 
     // Plan editing
     toggleStep: (phaseId: string, stepId: string) => void;
@@ -61,6 +65,12 @@ interface AppState {
     executionProgress: number;
     executePlanSteps: () => Promise<void>;
     updateStepStatus: (phaseId: string, stepId: string, update: Partial<Step>) => void;
+
+    // Blueprint Actions
+    updatePhaseAgent: (phaseId: string, agent: CodingAgent) => void;
+    addStepToPhase: (phaseId: string, title: string) => void;
+    deleteStep: (phaseId: string, stepId: string) => void;
+    updateStepDetails: (phaseId: string, stepId: string, description: string) => void;
 
     // Reset
     reset: () => void;
@@ -147,6 +157,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     architectureStream: { ...initialStreamState },
     databaseStream: { ...initialStreamState },
     apiStream: { ...initialStreamState },
+    blueprintStream: { ...initialStreamState },
 
     // Actions
     setCurrentScreen: (screen) => set({ currentScreen: screen }),
@@ -340,14 +351,103 @@ export const useAppStore = create<AppState>((set, get) => ({
                         content: fullContent,
                         error: null,
                     },
-                    generationStep: 'complete',
+                    // We don't mark as complete here anymore, we wait for blueprint
                 });
+                // Auto-trigger blueprint generation? Or let user click?
+                // User didn't specify auto-trigger, but "after API Design step completes" implies it.
+                // But BlueprintTab has a button. Let's start with button.
             },
             (error) => {
                 set({
                     apiStream: {
                         isStreaming: false,
                         content: get().apiStream.content,
+                        error,
+                    },
+                });
+            }
+        );
+    },
+
+    // Stream Blueprint
+    streamBlueprint: async () => {
+        const { intent, architectureStream, databaseStream, apiStream, plan } = get();
+
+        set({
+            generationStep: 'complete', // Move to blueprint view
+            blueprintStream: { isStreaming: true, content: '', error: null },
+        });
+
+        await consumeSSEStream(
+            `${API_BASE_URL}/api/blueprint`,
+            {
+                intent,
+                architecture: architectureStream.content,
+                database: databaseStream.content,
+                api: apiStream.content,
+            },
+            (chunk) => {
+                const current = get().blueprintStream.content;
+                set({
+                    blueprintStream: {
+                        isStreaming: true,
+                        content: current + chunk,
+                        error: null,
+                    },
+                });
+            },
+            (fullContent) => {
+                set({
+                    blueprintStream: {
+                        isStreaming: false,
+                        content: fullContent,
+                        error: null,
+                    },
+                });
+
+                // Parse and update Plan
+                try {
+                    // Clean up markdown code blocks if present
+                    let jsonString = fullContent.trim();
+                    const match = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (match) jsonString = match[1];
+
+                    const parsed = JSON.parse(jsonString);
+                    if (parsed && parsed.phases) {
+                        const currentPlan = plan || {
+                            id: `plan-${Date.now()}`,
+                            intent,
+                            createdAt: new Date(),
+                            phases: [],
+                            architecture: architectureStream.content,
+                            database: databaseStream.content,
+                            api: apiStream.content,
+                            techStack: [],
+                        };
+
+                        set({
+                            plan: {
+                                ...currentPlan,
+                                phases: parsed.phases
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to parse blueprint JSON:', e);
+                    set({
+                        blueprintStream: {
+                            isStreaming: false,
+                            content: fullContent,
+                            error: 'Failed to parse generated plan',
+                        }
+                    });
+                }
+            },
+            (error) => {
+                set({
+                    blueprintStream: {
+                        isStreaming: false,
+                        content: get().blueprintStream.content,
                         error,
                     },
                 });
@@ -422,18 +522,79 @@ export const useAppStore = create<AppState>((set, get) => ({
         });
 
         set({ plan: { ...plan, phases: updatedPhases } });
-
-        const totalSteps = plan.phases.reduce(
-            (acc, phase) => acc + phase.steps.filter(s => s.enabled).length,
-            0
-        );
-        const completedSteps = updatedPhases.reduce(
-            (acc, phase) => acc + phase.steps.filter(s => s.enabled && s.status === 'completed').length,
-            0
-        );
-        const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
-        set({ executionProgress: progress });
     },
+
+    updatePhaseAgent: (phaseId, agent) => {
+        const { plan } = get();
+        if (!plan) return;
+
+        const newPhases = plan.phases.map((phase) => {
+            if (phase.id !== phaseId) return phase;
+            return { ...phase, assignedAgent: agent };
+        });
+
+        set({ plan: { ...plan, phases: newPhases } });
+    },
+
+    addStepToPhase: (phaseId, title) => {
+        const { plan } = get();
+        if (!plan) return;
+
+        const newPhases = plan.phases.map((phase) => {
+            if (phase.id !== phaseId) return phase;
+
+            const newStep = { // Assuming Step type is defined elsewhere or inferred
+                id: `manual-${Date.now()}`,
+                title,
+                description: 'Manually added step',
+                enabled: true,
+                status: 'pending' as const
+            };
+
+            return {
+                ...phase,
+                steps: [...phase.steps, newStep]
+            };
+        });
+
+        set({ plan: { ...plan, phases: newPhases } });
+    },
+
+    deleteStep: (phaseId, stepId) => {
+        const { plan } = get();
+        if (!plan) return;
+
+        const newPhases = plan.phases.map((phase) => {
+            if (phase.id !== phaseId) return phase;
+            return {
+                ...phase,
+                steps: phase.steps.filter(s => s.id !== stepId)
+            };
+        });
+
+        const newPlan = { ...plan, phases: newPhases };
+        // Recalculate phases if empty? No, keep empty phase.
+        set({ plan: newPlan });
+    },
+
+    updateStepDetails: (phaseId, stepId, description) => {
+        const { plan } = get();
+        if (!plan) return;
+
+        const newPhases = plan.phases.map((phase) => {
+            if (phase.id !== phaseId) return phase;
+            return {
+                ...phase,
+                steps: phase.steps.map(step => {
+                    if (step.id !== stepId) return step;
+                    return { ...step, description };
+                })
+            };
+        });
+
+        set({ plan: { ...plan, phases: newPhases } });
+    },
+
 
     executePlanSteps: async () => {
         const { plan, updateStepStatus } = get();

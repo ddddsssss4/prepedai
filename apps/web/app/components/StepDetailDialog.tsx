@@ -14,19 +14,21 @@ import { Button } from '@/components/ui/button';
 import { Lightbulb, Check, Trash2 } from 'lucide-react';
 
 interface StepDetailDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
+    isOpen: boolean;
+    onClose: () => void;
     phase: Phase | null;
     step: Step | null;
-    onSave: (stepId: string, description: string) => void;
+    onSave?: (stepId: string, description: string) => void;
+    onDelete?: (stepId: string) => void;
 }
 
 export function StepDetailDialog({
-    open,
-    onOpenChange,
+    isOpen,
+    onClose,
     phase,
     step,
-    onSave
+    onSave,
+    onDelete
 }: StepDetailDialogProps) {
     const [description, setDescription] = useState('');
     const [isAiLoading, setIsAiLoading] = useState(false);
@@ -40,8 +42,13 @@ export function StepDetailDialog({
     if (!phase || !step) return null;
 
     const handleSave = () => {
-        onSave(step.id, description);
-        onOpenChange(false);
+        onSave?.(step.id, description);
+        onClose();
+    };
+
+    const handleDelete = () => {
+        onDelete?.(step.id);
+        onClose();
     };
 
     const handleAiGenerate = () => {
@@ -56,22 +63,22 @@ export function StepDetailDialog({
             ];
             // Pick based on step id hash or random
             const suggestion = aiSuggestions[Math.floor(Math.random() * aiSuggestions.length)];
-            setDescription(prev => prev ? `${prev}\n\n${suggestion}` : suggestion);
+            setDescription(prev => `${prev || ''}\n\n${suggestion}`);
             setIsAiLoading(false);
         }, 1500);
     };
 
-    const getRiskColor = (risk: string) => {
+    const getRiskColor = (risk: string): "destructive" | "outline" | "secondary" => {
         switch (risk) {
             case 'high': return 'destructive';
-            case 'medium': return 'warning';
-            case 'low': return 'success';
+            case 'medium': return 'secondary';
+            case 'low': return 'outline';
             default: return 'outline';
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[600px] bg-black/40 backdrop-blur-xl border-white/10 shadow-2xl p-0 gap-0 overflow-hidden">
                 {/* Header Section */}
                 <div className="p-6 pb-2">
