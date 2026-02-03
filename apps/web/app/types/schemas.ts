@@ -45,11 +45,16 @@ export const TechItemSchema = z.object({
 });
 export const TechStackSchema = z.array(TechItemSchema);
 
+// Coding Agent Schema for phase assignment
+export const CodingAgentSchema = z.enum(['gemini', 'claude', 'gpt4', 'manual']);
+export type CodingAgent = z.infer<typeof CodingAgentSchema>;
+
 // Step schema
 export const StepSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
+  detailedDescription: z.string().optional(), // Extended explanation for dialog
   enabled: z.boolean().default(true),
   status: ExecutionStatusSchema.default('pending'),
   result: z.string().optional(),
@@ -64,6 +69,7 @@ export const PhaseSchema = z.object({
   risk: RiskLevelSchema,
   steps: z.array(StepSchema),
   filesInvolved: z.array(z.string()).optional(),
+  assignedAgent: CodingAgentSchema.optional(), // Which AI agent to use
 });
 export type Phase = z.infer<typeof PhaseSchema>;
 
