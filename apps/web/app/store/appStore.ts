@@ -380,90 +380,78 @@ export const useAppStore = create<AppState>((set, get) => ({
         );
     },
 
-    // Stream Blueprint
+    // Generate Blueprint (non-streaming, returns structured JSON)
     streamBlueprint: async () => {
         const { intent, architectureStream, databaseStream, apiStream, plan } = get();
 
         set({
-            generationStep: 'complete', // Move to blueprint view
             blueprintStream: { isStreaming: true, content: '', error: null },
         });
 
-        await consumeSSEStream(
-            `${API_BASE_URL}/api/blueprint`,
-            {
-                intent,
-                architecture: architectureStream.content,
-                database: databaseStream.content,
-                api: apiStream.content,
-            },
-            (chunk) => {
-                const current = get().blueprintStream.content;
-                set({
-                    blueprintStream: {
-                        isStreaming: true,
-                        content: current + chunk,
-                        error: null,
-                    },
-                });
-            },
-            (fullContent) => {
-                set({
-                    blueprintStream: {
-                        isStreaming: false,
-                        content: fullContent,
-                        error: null,
-                    },
-                });
+        try {
+            // Use regular fetch instead of SSE streaming - we need complete JSON
+            const response = await fetch(`${API_BASE_URL}/api/blueprint`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    intent,
+                    architecture: architectureStream.content,
+                    database: databaseStream.content,
+                    api: apiStream.content,
+                }),
+            });
 
-                // Parse and update Plan
-                try {
-                    // Clean up markdown code blocks if present
-                    let jsonString = fullContent.trim();
-                    const match = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
-                    if (match) jsonString = match[1];
-
-                    const parsed = JSON.parse(jsonString);
-                    if (parsed && parsed.phases) {
-                        const currentPlan = plan || {
-                            id: `plan-${Date.now()}`,
-                            intent,
-                            createdAt: new Date(),
-                            phases: [],
-                            architecture: architectureStream.content,
-                            database: databaseStream.content,
-                            api: apiStream.content,
-                            techStack: [],
-                        };
-
-                        set({
-                            plan: {
-                                ...currentPlan,
-                                phases: parsed.phases
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.error('Failed to parse blueprint JSON:', e);
-                    set({
-                        blueprintStream: {
-                            isStreaming: false,
-                            content: fullContent,
-                            error: 'Failed to parse generated plan',
-                        }
-                    });
-                }
-            },
-            (error) => {
-                set({
-                    blueprintStream: {
-                        isStreaming: false,
-                        content: get().blueprintStream.content,
-                        error,
-                    },
-                });
+            if (!response.ok) {
+                throw new Error(`Blueprint API error: ${response.status}`);
             }
-        );
+
+            const data = await response.json();
+
+            // Handle different response formats
+            let phases = [];
+            if (data.phases) {
+                phases = data.phases;
+            } else if (data.content) {
+                // If wrapped in SSE format, extract
+                try {
+                    const parsed = JSON.parse(data.content);
+                    phases = parsed.phases || [];
+                } catch {
+                    // Try to extract JSON from markdown
+                    const match = data.content.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (match) {
+                        const innerParsed = JSON.parse(match[1].trim());
+                        phases = innerParsed.phases || [];
+                    }
+                }
+            }
+
+            const currentPlan = plan || {
+                id: `plan-${Date.now()}`,
+                intent,
+                createdAt: new Date(),
+                phases: [],
+                techStack: [],
+            };
+
+            set({
+                blueprintStream: { isStreaming: false, content: JSON.stringify(data), error: null },
+                plan: {
+                    ...currentPlan,
+                    phases,
+                }
+            });
+
+        } catch (error) {
+            console.error('Blueprint generation error:', error);
+            set({
+                blueprintStream: {
+                    isStreaming: false,
+                    content: '',
+                    error: error instanceof Error ? error.message : 'Failed to generate blueprint',
+                }
+            });
+        }
     },
 
     // Legacy function - now starts streaming flow
