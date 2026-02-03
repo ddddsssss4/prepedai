@@ -1,24 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { chatStream } from '../lib/llm';
-import {
-    ARCHITECTURE_SYSTEM_PROMPT,
-    buildArchitecturePrompt,
-} from '../prompts/architecture.prompt';
+import { DATABASE_SYSTEM_PROMPT, buildDatabasePrompt } from '../prompts/database.prompt';
 
 const router = Router();
 
-const ClarificationSchema = z.object({
-    question: z.string(),
-    answer: z.string(),
-});
-
 const RequestSchema = z.object({
-    prompt: z.string().min(10, 'Prompt must be at least 10 characters'),
-    clarifications: z.array(ClarificationSchema).default([]),
+    intent: z.string().min(10),
+    architecture: z.string().min(10), // Context from previous step
 });
 
-// SSE streaming endpoint for architecture generation
+// SSE streaming endpoint for database schema generation
 router.post('/', async (req: Request, res: Response) => {
     try {
         const validation = RequestSchema.safeParse(req.body);
@@ -30,9 +22,9 @@ router.post('/', async (req: Request, res: Response) => {
             });
         }
 
-        const { prompt, clarifications } = validation.data;
+        const { intent, architecture } = validation.data;
 
-        console.log('[Architecture] Starting stream for:', prompt.substring(0, 50));
+        console.log('[Database] Starting stream for:', intent.substring(0, 50));
 
         // Set SSE headers
         res.setHeader('Content-Type', 'text/event-stream');
@@ -45,11 +37,11 @@ router.post('/', async (req: Request, res: Response) => {
 
         try {
             for await (const chunk of chatStream(
-                buildArchitecturePrompt(prompt, clarifications),
+                buildDatabasePrompt(intent, architecture),
                 {
-                    systemPrompt: ARCHITECTURE_SYSTEM_PROMPT,
+                    systemPrompt: DATABASE_SYSTEM_PROMPT,
                     temperature: 0.4,
-                    maxTokens: 8192,
+                    maxTokens: 4096,
                 }
             )) {
                 fullContent += chunk;
@@ -62,15 +54,15 @@ router.post('/', async (req: Request, res: Response) => {
             res.write(`data: ${JSON.stringify({ type: 'done', content: fullContent })}\n\n`);
             res.end();
         } catch (streamError) {
-            console.error('[Architecture] Stream error:', streamError);
+            console.error('[Database] Stream error:', streamError);
             res.write(`data: ${JSON.stringify({ type: 'error', error: String(streamError) })}\n\n`);
             res.end();
         }
     } catch (error) {
-        console.error('[Architecture] Error:', error);
+        console.error('[Database] Error:', error);
         return res.status(500).json({
             success: false,
-            error: error instanceof Error ? error.message : 'Failed to generate architecture',
+            error: error instanceof Error ? error.message : 'Failed to generate database schema',
         });
     }
 });

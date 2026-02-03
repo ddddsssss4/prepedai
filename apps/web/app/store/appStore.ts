@@ -7,6 +7,15 @@ import { executePlan } from '../utils/executor';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Generation steps for progressive unlock
+export type GenerationStep = 'idle' | 'clarify' | 'architecture' | 'database' | 'api' | 'complete';
+
+interface StreamingState {
+    isStreaming: boolean;
+    content: string;
+    error: string | null;
+}
+
 interface AppState {
     // Current screen
     currentScreen: Screen;
@@ -20,6 +29,15 @@ interface AppState {
     plan: Plan | null;
     generatePlanFromIntent: () => void;
 
+    // Generation step tracking
+    generationStep: GenerationStep;
+    setGenerationStep: (step: GenerationStep) => void;
+
+    // Streaming state per layer
+    architectureStream: StreamingState;
+    databaseStream: StreamingState;
+    apiStream: StreamingState;
+
     // Clarification flow
     clarifications: Clarification[];
     clarificationStatus: ClarificationStatus;
@@ -27,6 +45,11 @@ interface AppState {
     fetchClarifyingQuestions: () => Promise<void>;
     updateClarificationAnswer: (index: number, answer: string) => void;
     submitClarificationsAndGenerateArchitecture: () => Promise<void>;
+
+    // Streaming actions
+    streamArchitecture: () => Promise<void>;
+    streamDatabase: () => Promise<void>;
+    streamApiDesign: () => Promise<void>;
 
     // Plan editing
     toggleStep: (phaseId: string, stepId: string) => void;
@@ -43,6 +66,73 @@ interface AppState {
     reset: () => void;
 }
 
+const initialStreamState: StreamingState = {
+    isStreaming: false,
+    content: '',
+    error: null,
+};
+
+// Helper to consume SSE stream
+async function consumeSSEStream(
+    url: string,
+    body: object,
+    onChunk: (chunk: string) => void,
+    onComplete: (fullContent: string) => void,
+    onError: (error: string) => void
+): Promise<void> {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No response body');
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullContent = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.type === 'chunk') {
+                            fullContent += data.content;
+                            onChunk(data.content);
+                        } else if (data.type === 'done') {
+                            onComplete(data.content || fullContent);
+                            return;
+                        } else if (data.type === 'error') {
+                            onError(data.error);
+                            return;
+                        }
+                    } catch {
+                        // Ignore parse errors
+                    }
+                }
+            }
+        }
+
+        onComplete(fullContent);
+    } catch (error) {
+        onError(error instanceof Error ? error.message : 'Stream failed');
+    }
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
     // Initial state
     currentScreen: 'intent',
@@ -53,11 +143,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     clarifications: [],
     clarificationStatus: 'idle',
     clarificationError: null,
+    generationStep: 'idle',
+    architectureStream: { ...initialStreamState },
+    databaseStream: { ...initialStreamState },
+    apiStream: { ...initialStreamState },
 
     // Actions
     setCurrentScreen: (screen) => set({ currentScreen: screen }),
-
     setIntent: (intent) => set({ intent }),
+    setGenerationStep: (step) => set({ generationStep: step }),
 
     generatePlanFromIntent: () => {
         const { intent } = get();
@@ -67,12 +161,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ plan: newPlan, currentScreen: 'planning' });
     },
 
-    // Clarification flow - ALL from LLM, no fallbacks
+    // Clarification flow
     fetchClarifyingQuestions: async () => {
         const { intent } = get();
         if (!intent.trim()) return;
 
-        set({ clarificationStatus: 'loading', clarificationError: null });
+        set({ clarificationStatus: 'loading', clarificationError: null, generationStep: 'clarify' });
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/clarify`, {
@@ -90,7 +184,6 @@ export const useAppStore = create<AppState>((set, get) => ({
                 }));
                 set({ clarifications, clarificationStatus: 'ready', clarificationError: null });
             } else {
-                // No fallback - show error
                 set({
                     clarifications: [],
                     clarificationStatus: 'ready',
@@ -104,7 +197,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 clarificationStatus: 'ready',
                 clarificationError: error instanceof Error
                     ? `LLM Error: ${error.message}`
-                    : 'Failed to connect to LLM. Make sure LM Studio is running on localhost:1234',
+                    : 'Failed to connect to LLM.',
             });
         }
     },
@@ -118,81 +211,153 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ clarifications: updated });
     },
 
-    submitClarificationsAndGenerateArchitecture: async () => {
+    // Stream Architecture
+    streamArchitecture: async () => {
         const { intent, clarifications, plan } = get();
 
-        set({ clarificationStatus: 'loading', clarificationError: null });
+        set({
+            generationStep: 'architecture',
+            architectureStream: { isStreaming: true, content: '', error: null },
+        });
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/architecture`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt: intent,
-                    clarifications: clarifications.filter(c => c.answer?.trim()),
-                }),
-            });
+        const basePlan = plan || generatePlan(intent);
+        set({ plan: basePlan });
 
-            const data = await response.json();
-
-            if (data.success && data.architecture) {
-                const arch = data.architecture;
-
-                // Generate the base plan first if not exists
-                const basePlan = plan || generatePlan(intent);
-
-                // Store the FULL architecture response for the new ArchitectureTab UI
-                // The ArchitectureTab component will handle the display
-                const updatedPlan: Plan = {
-                    ...basePlan,
-                    clarifications,
-                    clarificationStatus: 'completed',
-                    // Store full architecture data - ArchitectureTab will parse it
-                    architecture: arch as Plan['architecture'],
-                    database: {
-                        diagram: '',
-                        models: arch.technology_choices
-                            ?.filter((t: { category: string }) => t.category === 'Database')
-                            .map((t: { choice: string; reasoning: string }) => ({
-                                name: t.choice,
-                                fields: [t.reasoning],
-                            })) || [],
-                    },
-                    api: {
-                        endpoints: arch.components?.map((c: { name: string; purpose: string }) => ({
-                            method: 'GET' as const,
-                            path: `/api/${c.name.toLowerCase().replace(/\s/g, '-')}`,
-                            description: c.purpose,
-                        })) || [],
-                    },
-                    techStack: arch.technology_choices?.map((t: { category: string; choice: string; reasoning: string }) => ({
-                        category: t.category,
-                        name: t.choice,
-                        reason: t.reasoning,
-                    })) || [],
-                };
-
+        await consumeSSEStream(
+            `${API_BASE_URL}/api/architecture`,
+            {
+                prompt: intent,
+                clarifications: clarifications.filter(c => c.answer?.trim()),
+            },
+            (chunk) => {
+                const current = get().architectureStream.content;
                 set({
-                    plan: updatedPlan,
-                    clarificationStatus: 'completed',
-                    clarificationError: null,
+                    architectureStream: {
+                        isStreaming: true,
+                        content: current + chunk,
+                        error: null,
+                    },
                 });
-            } else {
-                // No fallback - show error
+            },
+            (fullContent) => {
                 set({
+                    architectureStream: {
+                        isStreaming: false,
+                        content: fullContent,
+                        error: null,
+                    },
                     clarificationStatus: 'completed',
-                    clarificationError: data.error || 'Failed to generate architecture. Check LM Studio.',
+                });
+            },
+            (error) => {
+                set({
+                    architectureStream: {
+                        isStreaming: false,
+                        content: get().architectureStream.content,
+                        error,
+                    },
                 });
             }
-        } catch (error) {
-            console.error('Failed to generate architecture:', error);
-            set({
-                clarificationStatus: 'completed',
-                clarificationError: error instanceof Error
-                    ? `Architecture Error: ${error.message}`
-                    : 'Failed to connect to LLM for architecture generation.',
-            });
-        }
+        );
+    },
+
+    // Stream Database
+    streamDatabase: async () => {
+        const { intent, architectureStream } = get();
+
+        set({
+            generationStep: 'database',
+            databaseStream: { isStreaming: true, content: '', error: null },
+        });
+
+        await consumeSSEStream(
+            `${API_BASE_URL}/api/database`,
+            {
+                intent,
+                architecture: architectureStream.content,
+            },
+            (chunk) => {
+                const current = get().databaseStream.content;
+                set({
+                    databaseStream: {
+                        isStreaming: true,
+                        content: current + chunk,
+                        error: null,
+                    },
+                });
+            },
+            (fullContent) => {
+                set({
+                    databaseStream: {
+                        isStreaming: false,
+                        content: fullContent,
+                        error: null,
+                    },
+                });
+            },
+            (error) => {
+                set({
+                    databaseStream: {
+                        isStreaming: false,
+                        content: get().databaseStream.content,
+                        error,
+                    },
+                });
+            }
+        );
+    },
+
+    // Stream API Design
+    streamApiDesign: async () => {
+        const { intent, architectureStream, databaseStream } = get();
+
+        set({
+            generationStep: 'api',
+            apiStream: { isStreaming: true, content: '', error: null },
+        });
+
+        await consumeSSEStream(
+            `${API_BASE_URL}/api/api-design`,
+            {
+                intent,
+                architecture: architectureStream.content,
+                database: databaseStream.content,
+            },
+            (chunk) => {
+                const current = get().apiStream.content;
+                set({
+                    apiStream: {
+                        isStreaming: true,
+                        content: current + chunk,
+                        error: null,
+                    },
+                });
+            },
+            (fullContent) => {
+                set({
+                    apiStream: {
+                        isStreaming: false,
+                        content: fullContent,
+                        error: null,
+                    },
+                    generationStep: 'complete',
+                });
+            },
+            (error) => {
+                set({
+                    apiStream: {
+                        isStreaming: false,
+                        content: get().apiStream.content,
+                        error,
+                    },
+                });
+            }
+        );
+    },
+
+    // Legacy function - now starts streaming flow
+    submitClarificationsAndGenerateArchitecture: async () => {
+        await get().streamArchitecture();
     },
 
     toggleStep: (phaseId, stepId) => {
@@ -201,7 +366,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const updatedPhases = plan.phases.map((phase) => {
             if (phase.id !== phaseId) return phase;
-
             return {
                 ...phase,
                 steps: phase.steps.map((step) =>
@@ -219,7 +383,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const updatedPhases = plan.phases.map((phase) => {
             if (phase.id !== phaseId) return phase;
-
             return {
                 ...phase,
                 steps: phase.steps.map((step) =>
@@ -250,7 +413,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const updatedPhases = plan.phases.map((phase) => {
             if (phase.id !== phaseId) return phase;
-
             return {
                 ...phase,
                 steps: phase.steps.map((step) =>
@@ -261,7 +423,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         set({ plan: { ...plan, phases: updatedPhases } });
 
-        // Update progress
         const totalSteps = plan.phases.reduce(
             (acc, phase) => acc + phase.steps.filter(s => s.enabled).length,
             0
@@ -297,6 +458,10 @@ export const useAppStore = create<AppState>((set, get) => ({
             clarifications: [],
             clarificationStatus: 'idle',
             clarificationError: null,
+            generationStep: 'idle',
+            architectureStream: { ...initialStreamState },
+            databaseStream: { ...initialStreamState },
+            apiStream: { ...initialStreamState },
         });
     },
 }));
