@@ -16,6 +16,7 @@ import {
     Boxes
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Components } from 'react-markdown';
 import { sanitizeMarkdown } from '../lib/markdownUtils';
 
@@ -210,7 +211,10 @@ export function DatabaseTab() {
                         {/* Schema Details */}
                         <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-8 shadow-lg">
                             <div className="prose prose-invert prose-sm max-w-none">
-                                <ReactMarkdown components={markdownComponents}>
+                                <ReactMarkdown
+                                    components={markdownComponents}
+                                    remarkPlugins={[remarkGfm]}
+                                >
                                     {sanitizeMarkdown(contentWithoutMermaid)}
                                 </ReactMarkdown>
                             </div>

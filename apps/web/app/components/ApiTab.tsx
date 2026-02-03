@@ -16,6 +16,7 @@ import {
     Lock
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Components } from 'react-markdown';
 
 // Custom markdown components for better styling
@@ -189,7 +190,10 @@ export function ApiTab() {
                     <div className="lg:col-span-2">
                         <div className="rounded-xl border border-white/10 bg-gradient-to-br from-blue-500/5 via-card/80 to-indigo-500/5 backdrop-blur-sm p-8 shadow-lg">
                             <div className="prose prose-invert prose-sm max-w-none">
-                                <ReactMarkdown components={markdownComponents}>
+                                <ReactMarkdown
+                                    components={markdownComponents}
+                                    remarkPlugins={[remarkGfm]}
+                                >
                                     {content}
                                 </ReactMarkdown>
                             </div>
