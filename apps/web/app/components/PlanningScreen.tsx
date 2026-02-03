@@ -44,14 +44,13 @@ export default function PlanningScreen() {
             </div>
 
             <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col space-y-8" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-6 bg-muted/20 backdrop-blur-sm p-1">
+                <TabsList className="grid w-full grid-cols-5 bg-muted/20 backdrop-blur-sm p-1">
                     <TabsTrigger value="clarification" className="uppercase tracking-wider font-mono text-xs data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400">
                         <HelpCircle className="h-3 w-3 mr-1" /> Clarify
                     </TabsTrigger>
                     <TabsTrigger value="architecture" className="uppercase tracking-wider font-mono text-xs">Architecture</TabsTrigger>
                     <TabsTrigger value="database" className="uppercase tracking-wider font-mono text-xs">Database</TabsTrigger>
                     <TabsTrigger value="api" className="uppercase tracking-wider font-mono text-xs">API Design</TabsTrigger>
-                    <TabsTrigger value="techstack" className="uppercase tracking-wider font-mono text-xs">Tech Stack</TabsTrigger>
                     <TabsTrigger value="blueprint" className="uppercase tracking-wider font-mono text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Blueprint</TabsTrigger>
                 </TabsList>
 
@@ -115,22 +114,6 @@ export default function PlanningScreen() {
                                 </div>
                                 <code className="text-sm font-mono text-primary break-all">{ep.path}</code>
                                 <p className="text-sm text-muted-foreground">{ep.description}</p>
-                            </div>
-                        ))}
-                    </div>
-                </TabsContent>
-
-                {/* TECH STACK TAB */}
-                <TabsContent value="techstack" className="flex-1 focus-visible:ring-0">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {plan.techStack?.map((tech, i) => (
-                            <div key={i} className="flex flex-col items-center text-center p-6 rounded-xl border border-white/10 bg-gradient-to-br from-card to-transparent hover:border-primary/50 transition-all group">
-                                <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Server className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
-                                </div>
-                                <h4 className="font-bold text-lg mb-1">{tech.name}</h4>
-                                <span className="text-xs font-mono text-primary/70 uppercase tracking-widest mb-3">{tech.category}</span>
-                                <p className="text-xs text-muted-foreground leading-relaxed">{tech.reason}</p>
                             </div>
                         ))}
                     </div>
