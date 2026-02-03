@@ -16,18 +16,21 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Review Config',
                         description: 'Review existing routes and components',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Select Strategy',
                         description: 'Choose auth library (e.g., NextAuth, Auth0, Clerk)',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Design Flow',
                         description: 'Design authentication flow',
                         enabled: true,
                         status: 'pending',
@@ -43,24 +46,28 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Dependencies',
                         description: 'Install auth dependencies',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'API Routes',
                         description: 'Create auth API routes',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Middleware',
                         description: 'Set up authentication middleware',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Sessions',
                         description: 'Configure session management',
                         enabled: true,
                         status: 'pending',
@@ -76,24 +83,28 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Auth Forms',
                         description: 'Create login/signup forms',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Providers',
                         description: 'Add session provider to layout',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Protection',
                         description: 'Implement route protection',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'User Profile',
                         description: 'Add user profile component',
                         enabled: true,
                         status: 'pending',
@@ -109,18 +120,21 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Flow Test',
                         description: 'Test login/logout flow',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Route Test',
                         description: 'Test protected routes',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Persistence',
                         description: 'Verify session persistence',
                         enabled: true,
                         status: 'pending',
@@ -140,18 +154,21 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Linting',
                         description: 'Run linter and identify issues',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Deduplication',
                         description: 'Identify duplicate code',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Dependency Map',
                         description: 'Map component dependencies',
                         enabled: true,
                         status: 'pending',
@@ -166,24 +183,28 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Extraction',
                         description: 'Extract reusable components',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Shared Logic',
                         description: 'Move shared logic to utilities',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Conventions',
                         description: 'Apply consistent naming conventions',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Cleanup',
                         description: 'Remove dead code',
                         enabled: true,
                         status: 'pending',
@@ -198,18 +219,21 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Unit Tests',
                         description: 'Run existing tests',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Manual QA',
                         description: 'Manual testing of affected features',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Performance',
                         description: 'Performance testing',
                         enabled: true,
                         status: 'pending',
@@ -229,18 +253,21 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Specs',
                         description: 'Write feature specifications',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Architecture',
                         description: 'Design component architecture',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Dependencies',
                         description: 'Identify dependencies and integrations',
                         enabled: true,
                         status: 'pending',
@@ -255,24 +282,28 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Components',
                         description: 'Create necessary components',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Logic',
                         description: 'Implement business logic',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'API',
                         description: 'Add API endpoints if needed',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Styling',
                         description: 'Style components',
                         enabled: true,
                         status: 'pending',
@@ -287,18 +318,21 @@ const templates: Record<string, Partial<Plan>> = {
                 steps: [
                     {
                         id: nanoid(),
+                        title: 'Unit Tests',
                         description: 'Write unit tests',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'Integration',
                         description: 'Write integration tests',
                         enabled: true,
                         status: 'pending',
                     },
                     {
                         id: nanoid(),
+                        title: 'QA',
                         description: 'Manual QA testing',
                         enabled: true,
                         status: 'pending',
@@ -320,18 +354,21 @@ const defaultPlan: Partial<Plan> = {
             steps: [
                 {
                     id: nanoid(),
+                    title: 'Review',
                     description: 'Review existing code',
                     enabled: true,
                     status: 'pending',
                 },
                 {
                     id: nanoid(),
+                    title: 'Identification',
                     description: 'Identify affected files',
                     enabled: true,
                     status: 'pending',
                 },
                 {
                     id: nanoid(),
+                    title: 'Planning',
                     description: 'Plan implementation approach',
                     enabled: true,
                     status: 'pending',
@@ -346,12 +383,14 @@ const defaultPlan: Partial<Plan> = {
             steps: [
                 {
                     id: nanoid(),
+                    title: 'Implementation',
                     description: 'Make necessary code changes',
                     enabled: true,
                     status: 'pending',
                 },
                 {
                     id: nanoid(),
+                    title: 'Documentation',
                     description: 'Update documentation',
                     enabled: true,
                     status: 'pending',
@@ -366,12 +405,14 @@ const defaultPlan: Partial<Plan> = {
             steps: [
                 {
                     id: nanoid(),
+                    title: 'Testing',
                     description: 'Test the changes',
                     enabled: true,
                     status: 'pending',
                 },
                 {
                     id: nanoid(),
+                    title: 'Verification',
                     description: 'Verify expected behavior',
                     enabled: true,
                     status: 'pending',
@@ -403,6 +444,10 @@ export function generatePlan(intent: string): Plan {
         id: nanoid(),
         intent,
         phases: selectedTemplate.phases || [],
+        architecture: selectedTemplate.architecture,
+        database: selectedTemplate.database,
+        api: selectedTemplate.api,
+        techStack: selectedTemplate.techStack,
         createdAt: new Date(),
     };
 }

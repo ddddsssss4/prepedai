@@ -1,9 +1,11 @@
 'use client';
 
 import { create } from 'zustand';
-import { Plan, Phase, Step, Screen } from '../types/schemas';
+import { Plan, Phase, Step, Screen, Clarification, ClarificationStatus } from '../types/schemas';
 import { generatePlan } from '../utils/planGenerator';
 import { executePlan } from '../utils/executor';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface AppState {
     // Current screen
@@ -17,6 +19,13 @@ interface AppState {
     // Plan
     plan: Plan | null;
     generatePlanFromIntent: () => void;
+
+    // Clarification flow
+    clarifications: Clarification[];
+    clarificationStatus: ClarificationStatus;
+    fetchClarifyingQuestions: () => Promise<void>;
+    updateClarificationAnswer: (index: number, answer: string) => void;
+    submitClarificationsAndGenerateArchitecture: () => Promise<void>;
 
     // Plan editing
     toggleStep: (phaseId: string, stepId: string) => void;
@@ -40,6 +49,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     plan: null,
     isExecuting: false,
     executionProgress: 0,
+    clarifications: [],
+    clarificationStatus: 'idle',
 
     // Actions
     setCurrentScreen: (screen) => set({ currentScreen: screen }),
@@ -52,6 +63,148 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const newPlan = generatePlan(intent);
         set({ plan: newPlan, currentScreen: 'planning' });
+    },
+
+    // Clarification flow
+    fetchClarifyingQuestions: async () => {
+        const { intent } = get();
+        if (!intent.trim()) return;
+
+        set({ clarificationStatus: 'loading' });
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/clarify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: intent }),
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.questions) {
+                const clarifications: Clarification[] = data.questions.map((q: string) => ({
+                    question: q,
+                    answer: '',
+                }));
+                set({ clarifications, clarificationStatus: 'ready' });
+            } else {
+                // Fallback questions if API fails
+                set({
+                    clarifications: [
+                        { question: 'What is the expected scale of users?', answer: '' },
+                        { question: 'Are there specific technology preferences?', answer: '' },
+                        { question: 'What integrations are required?', answer: '' },
+                    ],
+                    clarificationStatus: 'ready',
+                });
+            }
+        } catch (error) {
+            console.error('Failed to fetch clarifying questions:', error);
+            set({
+                clarifications: [
+                    { question: 'What is the expected scale of users?', answer: '' },
+                    { question: 'Are there specific technology preferences?', answer: '' },
+                ],
+                clarificationStatus: 'ready',
+            });
+        }
+    },
+
+    updateClarificationAnswer: (index, answer) => {
+        const { clarifications } = get();
+        const updated = [...clarifications];
+        if (updated[index]) {
+            updated[index] = { ...updated[index], answer };
+        }
+        set({ clarifications: updated });
+    },
+
+    submitClarificationsAndGenerateArchitecture: async () => {
+        const { intent, clarifications, plan } = get();
+
+        set({ clarificationStatus: 'loading' });
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/architecture`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: intent,
+                    clarifications: clarifications.filter(c => c.answer?.trim()),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.architecture) {
+                const arch = data.architecture;
+
+                // Generate the base plan first if not exists
+                const basePlan = plan || generatePlan(intent);
+
+                // Update plan with real architecture data
+                const updatedPlan: Plan = {
+                    ...basePlan,
+                    clarifications,
+                    clarificationStatus: 'completed',
+                    architecture: {
+                        diagram: arch.mermaid_diagram || '',
+                        patterns: arch.api_gateway?.responsibilities || [],
+                        tradeoffs: arch.tradeoffs?.map((t: { decision: string; reason: string }) =>
+                            `${t.decision}: ${t.reason}`
+                        ) || [],
+                    },
+                    database: {
+                        diagram: '', // Will be generated separately or from data_layer
+                        models: [
+                            {
+                                name: arch.data_layer?.primary_database?.tool || 'Database',
+                                fields: [
+                                    `Type: ${arch.data_layer?.primary_database?.type}`,
+                                    `Replication: ${arch.data_layer?.primary_database?.replication}`,
+                                ],
+                            },
+                        ],
+                    },
+                    api: {
+                        endpoints: arch.application_layer?.services?.map((s: { name: string; responsibility: string }) => ({
+                            method: 'GET' as const,
+                            path: `/api/${s.name.toLowerCase().replace(/\s/g, '-')}`,
+                            description: s.responsibility,
+                        })) || [],
+                    },
+                    techStack: [
+                        ...(arch.caching_layer?.tool ? [{ category: 'Cache', name: arch.caching_layer.tool, reason: 'Caching layer' }] : []),
+                        ...(arch.data_layer?.primary_database?.tool ? [{ category: 'Database', name: arch.data_layer.primary_database.tool, reason: arch.data_layer.primary_database.type }] : []),
+                        ...(arch.traffic_management?.load_balancer?.tool ? [{ category: 'Infrastructure', name: arch.traffic_management.load_balancer.tool, reason: 'Load balancing' }] : []),
+                        ...(arch.background_processing?.message_queue?.tool ? [{ category: 'Messaging', name: arch.background_processing.message_queue.tool, reason: 'Async processing' }] : []),
+                    ],
+                };
+
+                set({
+                    plan: updatedPlan,
+                    clarificationStatus: 'completed',
+                    currentScreen: 'planning',
+                });
+            } else {
+                // Fallback to local generation
+                const basePlan = plan || generatePlan(intent);
+                set({
+                    plan: { ...basePlan, clarifications, clarificationStatus: 'completed' },
+                    clarificationStatus: 'completed',
+                    currentScreen: 'planning',
+                });
+            }
+        } catch (error) {
+            console.error('Failed to generate architecture:', error);
+            // Fallback to local generation
+            const basePlan = plan || generatePlan(intent);
+            set({
+                plan: { ...basePlan, clarifications, clarificationStatus: 'completed' },
+                clarificationStatus: 'completed',
+                currentScreen: 'planning',
+            });
+        }
     },
 
     toggleStep: (phaseId, stepId) => {
@@ -151,6 +304,8 @@ export const useAppStore = create<AppState>((set, get) => ({
             plan: null,
             isExecuting: false,
             executionProgress: 0,
+            clarifications: [],
+            clarificationStatus: 'idle',
         });
     },
 }));

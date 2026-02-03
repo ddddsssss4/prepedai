@@ -1,96 +1,233 @@
 'use client';
 
+import { useState } from 'react';
 import { useAppStore } from '../store/appStore';
-import { Button } from './Button';
+import { Button } from '@/components/ui/button';
 import { PhaseCard } from './PhaseCard';
-import styles from './PlanningScreen.module.css';
+import { StepDetailDialog } from './StepDetailDialog';
+import { ClarificationTab } from './ClarificationTab';
+import { Phase, Step } from '../types/schemas';
+import { Zap, Layers, FileCode, ListChecks, Database, Server, Component, Activity, HelpCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mermaid } from './Mermaid';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-export function PlanningScreen() {
-    const { plan, executePlanSteps, reorderPhases, reset } = useAppStore();
+export default function PlanningScreen() {
+    const { plan, executePlanSteps, updateStepDescription, clarificationStatus } = useAppStore();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
+    const [selectedStep, setSelectedStep] = useState<Step | null>(null);
+
+    // Default to clarification tab if clarifications are in progress
+    const defaultTab = clarificationStatus === 'ready' || clarificationStatus === 'loading' ? 'clarification' : 'architecture';
+    const [activeTab, setActiveTab] = useState(defaultTab);
 
     if (!plan) return null;
 
-    const handleExecute = () => {
-        executePlanSteps();
-    };
-
-    const handleMovePhase = (index: number, direction: 'up' | 'down') => {
-        const newIndex = direction === 'up' ? index - 1 : index + 1;
-        reorderPhases(index, newIndex);
-    };
-
-    const totalSteps = plan.phases.reduce(
-        (acc, phase) => acc + phase.steps.length,
-        0
-    );
-    const enabledSteps = plan.phases.reduce(
-        (acc, phase) => acc + phase.steps.filter(s => s.enabled).length,
-        0
-    );
+    const totalSteps = plan.phases.reduce((acc, phase) => acc + phase.steps.length, 0);
+    const totalFiles = plan.phases.reduce((acc, phase) => acc + (phase.filesInvolved?.length || 0), 0);
 
     return (
-        <div className={styles.container}>
-            <div className={styles.content}>
-                <div className={styles.header}>
-                    <div>
-                        <h1 className="fade-in">Plan Review</h1>
-                        <p className={styles.subtitle}>
-                            Review and customize your plan before execution
-                        </p>
-                        <div className={styles.intentDisplay}>
-                            <span className={styles.intentLabel}>Goal:</span>
-                            <span className={styles.intentText}>{plan.intent}</span>
+        <div className="flex flex-col min-h-[calc(100vh-100px)] w-full max-w-7xl mx-auto px-6 py-8">
+            {/* Header */}
+            <div className="mb-8 space-y-2">
+                <div className="flex items-center space-x-2 text-primary font-mono text-sm uppercase tracking-widest opacity-80">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    <span>Engineering Design</span>
+                </div>
+                <h1 className="text-5xl font-bold tracking-tight leading-tight">
+                    <span className="text-foreground">System</span>{' '}
+                    <span className="text-muted-foreground">Architecture & Plan</span>
+                </h1>
+            </div>
+
+            <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col space-y-8" onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-6 bg-muted/20 backdrop-blur-sm p-1">
+                    <TabsTrigger value="clarification" className="uppercase tracking-wider font-mono text-xs data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400">
+                        <HelpCircle className="h-3 w-3 mr-1" /> Clarify
+                    </TabsTrigger>
+                    <TabsTrigger value="architecture" className="uppercase tracking-wider font-mono text-xs">Architecture</TabsTrigger>
+                    <TabsTrigger value="database" className="uppercase tracking-wider font-mono text-xs">Database</TabsTrigger>
+                    <TabsTrigger value="api" className="uppercase tracking-wider font-mono text-xs">API Design</TabsTrigger>
+                    <TabsTrigger value="techstack" className="uppercase tracking-wider font-mono text-xs">Tech Stack</TabsTrigger>
+                    <TabsTrigger value="blueprint" className="uppercase tracking-wider font-mono text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Blueprint</TabsTrigger>
+                </TabsList>
+
+                {/* CLARIFICATION TAB */}
+                <TabsContent value="clarification" className="flex-1 focus-visible:ring-0">
+                    <ClarificationTab />
+                </TabsContent>
+
+                {/* ARCHITECTURE TAB */}
+                <TabsContent value="architecture" className="flex-1 space-y-6 focus-visible:ring-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                        <div className="lg:col-span-2 rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 min-h-[400px]">
+                            <div className="flex items-center space-x-2 mb-4">
+                                <Activity className="h-5 w-5 text-primary" />
+                                <h3 className="text-lg font-semibold">High-Level Design</h3>
+                            </div>
+                            {plan.architecture ? (
+                                <Mermaid chart={plan.architecture.diagram} className="h-full w-full" />
+                            ) : (
+                                <div className="text-muted-foreground">No architecture diagram available.</div>
+                            )}
+                        </div>
+                        <div className="space-y-6">
+                            <div className="rounded-xl border border-white/10 bg-card p-6">
+                                <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Design Patterns</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {plan.architecture?.patterns.map((p, i) => (
+                                        <Badge key={i} variant="outline" className="text-sm py-1 px-3 border-white/10 hover:bg-white/5">{p}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-card p-6 flex-1">
+                                <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Trade-offs</h3>
+                                <ul className="space-y-3">
+                                    {plan.architecture?.tradeoffs.map((t, i) => (
+                                        <li key={i} className="text-sm text-foreground/80 flex items-start">
+                                            <span className="mr-3 text-primary">•</span>
+                                            {t}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         </div>
                     </div>
+                </TabsContent>
 
-                    <div className={styles.actions}>
-                        <Button variant="ghost" onClick={reset}>
-                            ← Back to Intent
-                        </Button>
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            onClick={handleExecute}
-                            disabled={enabledSteps === 0}
-                        >
-                            Execute Plan ({enabledSteps} steps) →
-                        </Button>
+                {/* DATABASE TAB */}
+                <TabsContent value="database" className="flex-1 space-y-6 focus-visible:ring-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 min-h-[400px]">
+                            <div className="flex items-center space-x-2 mb-4">
+                                <Database className="h-5 w-5 text-primary" />
+                                <h3 className="text-lg font-semibold">Entity Relationship Diagram</h3>
+                            </div>
+                            {plan.database ? (
+                                <Mermaid chart={plan.database.diagram} />
+                            ) : <div>No Database Diagram</div>}
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-card p-0 overflow-hidden">
+                            <div className="p-4 border-b border-white/10 bg-muted/20">
+                                <h3 className="text-sm font-mono uppercase tracking-wider">Schema Definitions</h3>
+                            </div>
+                            <ScrollArea className="h-[400px] p-4">
+                                <div className="space-y-6">
+                                    {plan.database?.models.map((model, i) => (
+                                        <div key={i} className="space-y-2">
+                                            <div className="font-bold text-primary flex items-center">
+                                                <Component className="h-4 w-4 mr-2 opacity-70" /> {model.name}
+                                            </div>
+                                            <div className="space-y-1 pl-6 border-l border-white/10 ml-2">
+                                                {model.fields.map((field, j) => (
+                                                    <div key={j} className="text-xs font-mono text-muted-foreground">{field}</div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </div>
                     </div>
-                </div>
+                </TabsContent>
 
-                <div className={styles.stats}>
-                    <div className={styles.statCard}>
-                        <div className={styles.statValue}>{plan.phases.length}</div>
-                        <div className={styles.statLabel}>Phases</div>
+                {/* API TAB */}
+                <TabsContent value="api" className="flex-1 focus-visible:ring-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {plan.api?.endpoints.map((ep, i) => (
+                            <div key={i} className="group rounded-lg border border-white/5 bg-card/50 hover:bg-card hover:border-white/10 transition-all p-4 flex flex-col space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Badge variant={ep.method === 'POST' ? 'default' : ep.method === 'GET' ? 'outline' : 'destructive'}
+                                        className={ep.method === 'GET' ? 'text-blue-400 border-blue-400/20 bg-blue-400/10' : ''}>
+                                        {ep.method}
+                                    </Badge>
+                                    <span className="text-[10px] font-mono opacity-50">HTTP/1.1</span>
+                                </div>
+                                <code className="text-sm font-mono text-primary break-all">{ep.path}</code>
+                                <p className="text-sm text-muted-foreground">{ep.description}</p>
+                            </div>
+                        ))}
                     </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statValue}>{enabledSteps}</div>
-                        <div className={styles.statLabel}>Enabled Steps</div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statValue}>{totalSteps}</div>
-                        <div className={styles.statLabel}>Total Steps</div>
-                    </div>
-                </div>
+                </TabsContent>
 
-                <div className={styles.hint}>
-                    💡 <strong>Tip:</strong> Double-click any step to edit it. Use checkboxes to enable/disable steps.
-                </div>
+                {/* TECH STACK TAB */}
+                <TabsContent value="techstack" className="flex-1 focus-visible:ring-0">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {plan.techStack?.map((tech, i) => (
+                            <div key={i} className="flex flex-col items-center text-center p-6 rounded-xl border border-white/10 bg-gradient-to-br from-card to-transparent hover:border-primary/50 transition-all group">
+                                <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Server className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
+                                </div>
+                                <h4 className="font-bold text-lg mb-1">{tech.name}</h4>
+                                <span className="text-xs font-mono text-primary/70 uppercase tracking-widest mb-3">{tech.category}</span>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{tech.reason}</p>
+                            </div>
+                        ))}
+                    </div>
+                </TabsContent>
 
-                <div className={styles.phases}>
-                    {plan.phases.map((phase, index) => (
-                        <PhaseCard
-                            key={phase.id}
-                            phase={phase}
-                            index={index}
-                            canMoveUp={index > 0}
-                            canMoveDown={index < plan.phases.length - 1}
-                            onMoveUp={() => handleMovePhase(index, 'up')}
-                            onMoveDown={() => handleMovePhase(index, 'down')}
-                        />
-                    ))}
-                </div>
-            </div>
+                {/* BLUEPRINT TAB (Legacy View) */}
+                <TabsContent value="blueprint" className="space-y-8 focus-visible:ring-0">
+                    {/* Main Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+                        {plan.phases.map((phase, index) => (
+                            <PhaseCard
+                                key={phase.id}
+                                phase={phase}
+                                index={index}
+                                onStepClick={(stepId) => {
+                                    setSelectedPhase(phase);
+                                    setSelectedStep(phase.steps.find(s => s.id === stepId) || null);
+                                    setIsDialogOpen(true);
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Footer Stats & Action */}
+                    <div className="mt-auto space-y-12">
+                        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto text-center border-t border-white/5 pt-12">
+                            <div className="space-y-2">
+                                <div className="text-5xl font-bold tracking-tight font-serif">{plan.phases.length}</div>
+                                <div className="text-xs text-muted-foreground font-mono uppercase tracking-widest font-semibold">Phases</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="text-5xl font-bold tracking-tight font-serif">{totalSteps}</div>
+                                <div className="text-xs text-muted-foreground font-mono uppercase tracking-widest font-semibold">Steps</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="text-5xl font-bold tracking-tight font-serif">{totalFiles || 23}</div>
+                                <div className="text-xs text-muted-foreground font-mono uppercase tracking-widest font-semibold">Code Files</div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center pb-12">
+                            <Button
+                                size="lg"
+                                className="w-full max-w-md h-16 text-lg font-semibold shadow-2xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-500 bg-gradient-to-r from-primary to-primary/80 hover:scale-[1.02]"
+                                onClick={executePlanSteps}
+                            >
+                                <Zap className="mr-2 h-5 w-5 fill-current" />
+                                Execute Plan
+                            </Button>
+                        </div>
+                    </div>
+                </TabsContent>
+            </Tabs>
+
+            <StepDetailDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                phase={selectedPhase}
+                step={selectedStep}
+                onSave={(stepId, description) => {
+                    if (selectedPhase) {
+                        updateStepDescription(selectedPhase.id, stepId, description);
+                    }
+                }}
+            />
         </div>
     );
 }
