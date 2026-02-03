@@ -46,7 +46,24 @@ IMPORTANT:
 - Only use \`PK\`, \`FK\`, \`UK\` qualifiers next to the attribute type and name
 - Show relationships with proper cardinality (||--o{, }o--||, etc.)
 - Keep field names simple (no spaces or special characters)
-- Be practical for the project scale`;
+- Be practical for the project scale
+
+CRITICAL - THESE ARE INVALID AND WILL CAUSE PARSE ERRORS:
+\`\`\`
+// WRONG - Do NOT do this:
+POST_TAG {
+    uuid post_id FK
+    uuid tag_id FK
+    PRIMARY KEY (post_id, tag_id)   <-- THIS BREAKS MERMAID
+}
+
+// CORRECT - Do this instead for junction tables:
+POST_TAG {
+    uuid post_id PK FK
+    uuid tag_id PK FK
+}
+\`\`\`
+Never use PRIMARY KEY(...) or FOREIGN KEY(...) inside erDiagram blocks.`;
 
 export function buildDatabasePrompt(
     intent: string,

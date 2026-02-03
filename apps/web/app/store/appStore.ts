@@ -362,7 +362,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                         content: fullContent,
                         error: null,
                     },
-                    // We don't mark as complete here anymore, we wait for blueprint
+                    generationStep: 'complete', // Unlock Blueprint tab after API design completes
                 });
                 // Auto-trigger blueprint generation? Or let user click?
                 // User didn't specify auto-trigger, but "after API Design step completes" implies it.
