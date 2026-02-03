@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import mermaid from 'mermaid';
 import { AlertTriangle } from 'lucide-react';
 
@@ -23,8 +23,37 @@ mermaid.initialize({
     },
 });
 
+/**
+ * Sanitize mermaid chart content to fix common syntax issues
+ * - Escape parentheses inside square bracket node labels
+ * - Convert escaped newlines to real newlines
+ */
+function sanitizeMermaidChart(chart: string): string {
+    let clean = chart
+        .trim()
+        .replace(/\\n/g, '\n')      // Convert escaped newlines
+        .replace(/\\t/g, '  ')       // Convert tabs to spaces
+        .replace(/\r\n/g, '\n');     // Normalize line endings
+
+    // Fix node labels with parentheses inside square brackets
+    // e.g., A[Content Delivery Network (CDN)] -> A["Content Delivery Network (CDN)"]
+    // This regex finds [...text with (parens)...]  and wraps content in quotes
+    clean = clean.replace(/\[([^\]]*\([^\]]*\)[^\]]*)\]/g, (match, content) => {
+        // If already quoted, don't double-quote
+        if (content.startsWith('"') && content.endsWith('"')) {
+            return match;
+        }
+        return `["${content}"]`;
+    });
+
+    // Also handle parentheses that aren't matched: just remove them from labels
+    // This is a fallback for edge cases
+
+    console.log('[Mermaid] Sanitized chart:', clean);
+    return clean;
+}
+
 export const Mermaid = ({ chart, className }: MermaidProps) => {
-    const ref = useRef<HTMLDivElement>(null);
     const [error, setError] = useState<string | null>(null);
     const [svg, setSvg] = useState<string>('');
 
@@ -35,33 +64,37 @@ export const Mermaid = ({ chart, className }: MermaidProps) => {
                 return;
             }
 
-            // Clean and normalize the chart content
-            let cleanChart = chart
-                .trim()
-                .replace(/\\n/g, '\n')  // Convert escaped newlines to real newlines
-                .replace(/\\t/g, '  ')   // Convert tabs to spaces
-                .replace(/\r\n/g, '\n'); // Normalize line endings
-
-            // Log for debugging
-            console.log('[Mermaid] Raw chart input:', chart);
-            console.log('[Mermaid] Cleaned chart:', cleanChart);
+            const cleanChart = sanitizeMermaidChart(chart);
+            console.log('[Mermaid] Raw input:', chart.substring(0, 100) + '...');
 
             try {
-                // Validate first
-                const isValid = await mermaid.parse(cleanChart);
-                console.log('[Mermaid] Parse result:', isValid);
-
                 // Generate unique ID
                 const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-                // Render
+                // Render directly - mermaid.render handles validation
                 const { svg: renderedSvg } = await mermaid.render(id, cleanChart);
                 setSvg(renderedSvg);
                 setError(null);
             } catch (err) {
                 console.error('[Mermaid] Render error:', err);
-                console.error('[Mermaid] Failed chart content:', cleanChart);
-                setError(err instanceof Error ? err.message : 'Failed to render diagram');
+                console.error('[Mermaid] Failed chart:\n', cleanChart);
+
+                // Try a fallback: strip all parentheses from node labels
+                try {
+                    const fallbackChart = cleanChart.replace(/\[([^\]]+)\]/g, (match, content) => {
+                        // Remove parentheses and their contents from labels
+                        const cleaned = content.replace(/\s*\([^)]*\)/g, '');
+                        return `[${cleaned}]`;
+                    });
+
+                    console.log('[Mermaid] Trying fallback chart:', fallbackChart.substring(0, 100));
+                    const fallbackId = `mermaid-fallback-${Date.now()}`;
+                    const { svg: fallbackSvg } = await mermaid.render(fallbackId, fallbackChart);
+                    setSvg(fallbackSvg);
+                    setError(null);
+                } catch (fallbackErr) {
+                    setError(err instanceof Error ? err.message : 'Failed to render diagram');
+                }
             }
         };
 
@@ -74,9 +107,9 @@ export const Mermaid = ({ chart, className }: MermaidProps) => {
                 <AlertTriangle className="h-8 w-8 text-red-400 mb-3" />
                 <p className="text-red-400 text-sm font-medium">Diagram Error</p>
                 <p className="text-red-400/70 text-xs mt-1 text-center max-w-md">{error}</p>
-                <details className="mt-4 text-xs text-muted-foreground">
+                <details className="mt-4 text-xs text-muted-foreground w-full">
                     <summary className="cursor-pointer hover:text-foreground">Show raw content</summary>
-                    <pre className="mt-2 p-3 bg-black/40 rounded text-xs overflow-auto max-h-32 max-w-full">
+                    <pre className="mt-2 p-3 bg-black/40 rounded text-xs overflow-auto max-h-40 whitespace-pre-wrap">
                         {chart}
                     </pre>
                 </details>
