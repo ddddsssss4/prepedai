@@ -18,6 +18,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Components } from 'react-markdown';
+import { sanitizeMarkdown } from '../lib/markdownUtils';
 
 // Custom markdown components for better styling
 const markdownComponents: Partial<Components> = {
@@ -167,6 +168,13 @@ export function ApiTab() {
     if (isStreaming || content) {
         const isComplete = !isStreaming && content.length > 0;
 
+        // Debug logging
+        console.log('[ApiTab] Content length:', content.length);
+        console.log('[ApiTab] Is streaming:', isStreaming);
+        if (content.length > 0) {
+            console.log('[ApiTab] Content preview:', content.substring(0, 200));
+        }
+
         return (
             <div className="space-y-6">
                 {/* Streaming indicator */}
@@ -194,7 +202,7 @@ export function ApiTab() {
                                     components={markdownComponents}
                                     remarkPlugins={[remarkGfm]}
                                 >
-                                    {content}
+                                    {sanitizeMarkdown(content)}
                                 </ReactMarkdown>
                             </div>
                         </div>
