@@ -19,6 +19,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { Mermaid } from './Mermaid';
 import { Components } from 'react-markdown';
+import { sanitizeMarkdown, extractMermaid } from '../lib/markdownUtils';
 
 // Custom markdown components for better styling
 const markdownComponents: Partial<Components> = {
@@ -195,7 +196,7 @@ export function ArchitectureTab() {
                         <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-8 shadow-lg">
                             <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown components={markdownComponents}>
-                                    {contentWithoutMermaid}
+                                    {sanitizeMarkdown(contentWithoutMermaid)}
                                 </ReactMarkdown>
                             </div>
                         </div>
