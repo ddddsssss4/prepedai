@@ -65,40 +65,61 @@ export function BlueprintTab() {
         );
     }
 
+    // Streaming state - show real-time content like other layers
+    if (blueprintStream.isStreaming || (blueprintStream.content && (!plan?.phases?.length))) {
+        return (
+            <div className="space-y-6">
+                {/* Streaming indicator */}
+                <div className="flex items-center gap-2 text-primary animate-pulse bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm font-mono">
+                        {blueprintStream.isStreaming ? 'Generating execution blueprint...' : 'Parsing blueprint...'}
+                    </span>
+                </div>
+
+                {/* Error display */}
+                {blueprintStream.error && (
+                    <div className="flex items-center gap-2 text-red-500 bg-red-500/10 p-4 rounded-lg border border-red-500/20">
+                        <span>⚠️ {blueprintStream.error}</span>
+                    </div>
+                )}
+
+                {/* Show streaming content in real-time */}
+                {blueprintStream.content && (
+                    <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-6 shadow-lg">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <ListChecks className="h-5 w-5 text-primary" />
+                            Blueprint Output
+                        </h3>
+                        <pre className="text-sm text-muted-foreground font-mono whitespace-pre-wrap bg-black/20 p-4 rounded-lg max-h-[500px] overflow-auto">
+                            {blueprintStream.content}
+                        </pre>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     // Generate button if plan is empty but we are ready
     if (!plan || !plan.phases || plan.phases.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 space-y-6">
-                {blueprintStream.isStreaming ? (
-                    <>
-                        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                        <div className="text-center space-y-2">
-                            <h3 className="text-lg font-medium">Generating Execution Blueprint</h3>
-                            <p className="text-muted-foreground max-w-md">
-                                Analyzing architecture, database, and API designs to create a detailed implementation plan...
-                            </p>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <ListChecks className="h-16 w-16 text-muted-foreground/30" />
-                        <div className="text-center space-y-4">
-                            <div>
-                                <h3 className="text-lg font-medium">Ready to Plan</h3>
-                                <p className="text-muted-foreground max-w-md mt-2">
-                                    Your architecture and designs are ready. Generate a step-by-step execution blueprint to start building.
-                                </p>
-                            </div>
-                            <Button
-                                onClick={() => streamBlueprint()}
-                                size="lg"
-                                className="font-semibold"
-                            >
-                                Generate Blueprint
-                            </Button>
-                        </div>
-                    </>
-                )}
+                <ListChecks className="h-16 w-16 text-muted-foreground/30" />
+                <div className="text-center space-y-4">
+                    <div>
+                        <h3 className="text-lg font-medium">Ready to Plan</h3>
+                        <p className="text-muted-foreground max-w-md mt-2">
+                            Your architecture and designs are ready. Generate a step-by-step execution blueprint to start building.
+                        </p>
+                    </div>
+                    <Button
+                        onClick={() => streamBlueprint()}
+                        size="lg"
+                        className="font-semibold"
+                    >
+                        Generate Blueprint
+                    </Button>
+                </div>
             </div>
         );
     }

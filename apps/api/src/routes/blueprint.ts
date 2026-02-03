@@ -13,28 +13,36 @@ router.post('/', async (req: Request, res: Response) => {
             return;
         }
 
+        console.log('[Blueprint] Starting stream for:', intent.substring(0, 50));
+
         const prompt = buildBlueprintPrompt(intent, architecture, database, api);
 
-        // We stream the JSON response
+        // Set SSE headers (matching other routes)
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.flushHeaders();
+
+        let fullContent = '';
 
         try {
-            const stream = chatStream(prompt, {
+            for await (const chunk of chatStream(prompt, {
                 systemPrompt: BLUEPRINT_SYSTEM_PROMPT,
                 model: 'qwen2.5-coder-7b-instruct'
-            });
+            })) {
+                fullContent += chunk;
 
-            for await (const chunk of stream) {
-                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                // Send chunk as SSE event - MUST match format expected by consumeSSEStream
+                res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
             }
 
-            res.write('data: [DONE]\n\n');
+            // Send completion event with full content
+            res.write(`data: ${JSON.stringify({ type: 'done', content: fullContent })}\n\n`);
             res.end();
-        } catch (error) {
-            console.error('Blueprint generation error:', error);
-            res.write(`data: ${JSON.stringify({ error: 'Failed to generate blueprint' })}\n\n`);
+        } catch (streamError) {
+            console.error('[Blueprint] Stream error:', streamError);
+            res.write(`data: ${JSON.stringify({ type: 'error', error: String(streamError) })}\n\n`);
             res.end();
         }
 
