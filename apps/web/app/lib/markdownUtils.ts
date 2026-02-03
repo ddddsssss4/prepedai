@@ -1,5 +1,6 @@
 /**
  * Sanitize markdown content to fix common issues from LLM streaming
+ * Main issue: Tables are output on single lines instead of separate lines
  */
 export function sanitizeMarkdown(content: string): string {
     let sanitized = content;
@@ -9,62 +10,68 @@ export function sanitizeMarkdown(content: string): string {
     sanitized = sanitized.replace(/\\t/g, '  ');
     sanitized = sanitized.replace(/\r\n/g, '\n');
 
-    // Fix markdown tables that are all on one line
-    // Pattern: | Header1 | Header2 | |---|---| | Data1 | Data2 |
-    // Needs to become:
-    // | Header1 | Header2 |
-    // |---|---|
-    // | Data1 | Data2 |
+    // Fix markdown tables - the LLM outputs them on single lines like:
+    // | Header1 | Header2 | |---|---| | Data1 | Data2 |
+    // We need each row on its own line
 
-    // Step 1: Add newline BEFORE the separator row |---|---|
-    // This regex matches: end of a cell `|` followed by space(s) then `|---`
-    sanitized = sanitized.replace(/\|\s+(\|[-:]+)/g, '|\n$1');
+    // Strategy: Find table separator pattern |---|---| and use it to identify tables
+    // Then split the rows properly
 
-    // Step 2: Add newline AFTER the separator row
-    // This regex matches: end of separator row `---| ` followed by `|` starting next row
-    sanitized = sanitized.replace(/([-:]+\|)\s+\|(?!\s*[-:])/g, '$1\n|');
+    // Pattern 1: Header row ends, separator row starts
+    // `| ` followed by `|---` or `|:--` (with possible spaces)
+    // Insert newline before the separator
+    sanitized = sanitized.replace(/(\|)\s+(\|[-:]+)/g, '$1\n$2');
 
-    // Step 3: Split data rows that are on the same line
-    // Pattern: | ... | | ... | (two complete rows on one line)
-    // Match: `| ` at end of row followed by space(s) then `| ` starting new row
-    // But we need to be careful not to split individual cells
+    // Pattern 2: Separator row ends, data row starts
+    // `---|` or `--:|` followed by space and `|` (start of data cell)
+    // Insert newline after separator row
+    sanitized = sanitized.replace(/([-:]+\|)\s+(\|)(?=\s*[A-Za-z0-9])/g, '$1\n$2');
 
-    // Look for pattern: `|` followed by whitespace then `|` followed by non-dash character
-    // This indicates a new row starting
-    const lines = sanitized.split('\n');
-    const processedLines: string[] = [];
+    // Pattern 3: Multiple data rows on same line
+    // End of row `|` followed by spaces and `|` starting next row
+    // But NOT if it's part of separator (contains -)
+    // Look for: `| ` + `|` + letter/number (not -)
+    sanitized = sanitized.replace(/(\|)\s{2,}(\|)(?=\s*[A-Za-z0-9])/g, '$1\n$2');
 
-    for (const line of lines) {
-        // Count pipe characters to detect multiple rows on one line
-        const pipeCount = (line.match(/\|/g) || []).length;
-
-        // A typical table row has 5-8 pipes (3-4 columns = 4-5 pipes including ends)
-        // If we have more than 10 pipes, likely multiple rows
-        if (pipeCount > 10) {
-            // Try to split on pattern: `| |` which indicates row boundary
-            // But first check if it's a separator row
-            if (!line.includes('|---') && !line.includes('|:--')) {
-                // This is likely multiple data rows
-                // Split on: `| ` followed by `|` (but not part of separator)
-                const splitLine = line.replace(/\|\s+\|(?!\s*[-:])/g, '|\n|');
-                processedLines.push(splitLine);
-            } else {
-                processedLines.push(line);
-            }
-        } else {
-            processedLines.push(line);
-        }
-    }
-
-    sanitized = processedLines.join('\n');
-
-    // Final cleanup: ensure proper spacing
-    // Remove multiple consecutive newlines
-    sanitized = sanitized.replace(/\n{3,}/g, '\n\n');
-
-    console.log('[sanitizeMarkdown] Input length:', content.length, 'Output length:', sanitized.length);
+    // Debug: Log a sample of what we're processing
+    console.log('[sanitizeMarkdown] Sample of processed content:',
+        sanitized.substring(0, 500).replace(/\n/g, '\\n'));
 
     return sanitized;
+}
+
+/**
+ * More aggressive table fixer - splits tables into proper rows
+ * Call this if sanitizeMarkdown doesn't work
+ */
+export function fixMarkdownTables(content: string): string {
+    let result = content;
+
+    // Normalize escaped newlines
+    result = result.replace(/\\n/g, '\n');
+
+    // Find anything that looks like a markdown table row: | something |
+    // The key insight: separator row has pattern |---|, |:--|, etc
+
+    // Split on the separator pattern
+    // Before: | A | B | |---|---| | C | D |
+    // We want to insert \n before |---
+
+    // Step 1: Add newline before separator row
+    result = result.replace(/\|\s*(\|[-:]+[-:|\s]+)/g, '|\n$1');
+
+    // Step 2: Add newline after separator row (before data rows)
+    // Separator ends with | followed by space and another |
+    result = result.replace(/([-:]+\|)\s*(\|\s*[^-|])/g, '$1\n$2');
+
+    // Step 3: Handle multiple data rows on same line
+    // Pattern: | data | | data | (row boundary is `| |`)
+    // We need to detect when one row ends and another begins
+    // A row ends with | and next row starts with | 
+    // The trick: there's usually extra spacing between rows
+    result = result.replace(/\|\s{3,}\|/g, '|\n|');
+
+    return result;
 }
 
 /**

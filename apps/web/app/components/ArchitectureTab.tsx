@@ -154,6 +154,15 @@ export function ArchitectureTab() {
         // Debug logging
         console.log('[ArchitectureTab] Streaming content length:', content.length);
         console.log('[ArchitectureTab] Mermaid match found:', !!mermaidMatch);
+
+        // Log table-related content for debugging
+        if (content.includes('|')) {
+            // Find and log table content
+            const tableStart = content.indexOf('|');
+            const tableSample = content.substring(tableStart, tableStart + 300);
+            console.log('[ArchitectureTab] RAW TABLE CONTENT:', JSON.stringify(tableSample));
+        }
+
         if (mermaidCode) {
             console.log('[ArchitectureTab] Mermaid code:', mermaidCode.substring(0, 100) + '...');
         }
