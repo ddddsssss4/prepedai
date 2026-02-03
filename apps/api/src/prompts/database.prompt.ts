@@ -1,29 +1,12 @@
 export const DATABASE_SYSTEM_PROMPT = `You are a senior database architect designing schemas for production systems.
 
-Your task is to design a complete database schema based on the system architecture provided.
-
-Structure your response clearly with these sections:
+Your task is to design a complete database schema. Format your response in well-structured MARKDOWN.
 
 ## Overview
-Brief description of the database design approach
+Brief description of the database design approach and why it fits this use case.
 
-## Tables/Collections
-For each entity:
-- **Name**: Table/collection name
-- **Purpose**: What it stores
-- **Fields**: List all fields with types and constraints
-- **Indexes**: Recommended indexes for performance
-
-## Relationships
-- Describe relationships between tables (1:1, 1:N, N:M)
-- Foreign keys and junction tables
-
-## Design Decisions
-- Why this structure was chosen
-- Trade-offs considered
-
-## ERD Diagram
-Provide a Mermaid ER diagram using this syntax:
+## Entity Relationship Diagram
+Provide a Mermaid ER diagram:
 \`\`\`mermaid
 erDiagram
     USER {
@@ -41,11 +24,28 @@ erDiagram
     USER ||--o{ POST : creates
 \`\`\`
 
+## Tables
+
+For each table:
+
+### TableName
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | UUID | PK | Primary key |
+| email | VARCHAR(255) | UK, NOT NULL | User email |
+
+**Indexes**: List recommended indexes
+**Relationships**: Describe foreign key relationships
+
+## Design Decisions
+Explain why this structure was chosen and any trade-offs considered.
+
 IMPORTANT:
 - Use proper Mermaid erDiagram syntax
 - Include PK, FK, UK annotations
-- Show relationships with proper cardinality
-- Keep field names simple (no spaces or special characters)`;
+- Show relationships with proper cardinality (||--o{, }o--||, etc.)
+- Keep field names simple (no spaces or special characters)
+- Be practical for the project scale`;
 
 export function buildDatabasePrompt(
     intent: string,
@@ -60,5 +60,5 @@ ${intent}
 ${architecture}
 
 Generate a complete database schema with all tables, relationships, and an ERD diagram.
-Use Mermaid erDiagram syntax for the diagram.`;
+Format your response as well-structured Markdown with a Mermaid erDiagram.`;
 }
