@@ -141,43 +141,35 @@ export const useAppStore = create<AppState>((set, get) => ({
                 // Generate the base plan first if not exists
                 const basePlan = plan || generatePlan(intent);
 
-                // Update plan with real architecture data from LLM
+                // Store the FULL architecture response for the new ArchitectureTab UI
+                // The ArchitectureTab component will handle the display
                 const updatedPlan: Plan = {
                     ...basePlan,
                     clarifications,
                     clarificationStatus: 'completed',
-                    architecture: {
-                        diagram: arch.mermaid_diagram || '',
-                        patterns: arch.api_gateway?.responsibilities || [],
-                        tradeoffs: arch.tradeoffs?.map((t: { decision: string; reason: string }) =>
-                            `${t.decision}: ${t.reason}`
-                        ) || [],
-                    },
+                    // Store full architecture data - ArchitectureTab will parse it
+                    architecture: arch as Plan['architecture'],
                     database: {
-                        diagram: '', // Will be generated separately
-                        models: [
-                            {
-                                name: arch.data_layer?.primary_database?.tool || 'Database',
-                                fields: [
-                                    `Type: ${arch.data_layer?.primary_database?.type}`,
-                                    `Replication: ${arch.data_layer?.primary_database?.replication}`,
-                                ],
-                            },
-                        ],
+                        diagram: '',
+                        models: arch.technology_choices
+                            ?.filter((t: { category: string }) => t.category === 'Database')
+                            .map((t: { choice: string; reasoning: string }) => ({
+                                name: t.choice,
+                                fields: [t.reasoning],
+                            })) || [],
                     },
                     api: {
-                        endpoints: arch.application_layer?.services?.map((s: { name: string; responsibility: string }) => ({
+                        endpoints: arch.components?.map((c: { name: string; purpose: string }) => ({
                             method: 'GET' as const,
-                            path: `/api/${s.name.toLowerCase().replace(/\s/g, '-')}`,
-                            description: s.responsibility,
+                            path: `/api/${c.name.toLowerCase().replace(/\s/g, '-')}`,
+                            description: c.purpose,
                         })) || [],
                     },
-                    techStack: [
-                        ...(arch.caching_layer?.tool ? [{ category: 'Cache', name: arch.caching_layer.tool, reason: 'Caching layer' }] : []),
-                        ...(arch.data_layer?.primary_database?.tool ? [{ category: 'Database', name: arch.data_layer.primary_database.tool, reason: arch.data_layer.primary_database.type }] : []),
-                        ...(arch.traffic_management?.load_balancer?.tool ? [{ category: 'Infrastructure', name: arch.traffic_management.load_balancer.tool, reason: 'Load balancing' }] : []),
-                        ...(arch.background_processing?.message_queue?.tool ? [{ category: 'Messaging', name: arch.background_processing.message_queue.tool, reason: 'Async processing' }] : []),
-                    ],
+                    techStack: arch.technology_choices?.map((t: { category: string; choice: string; reasoning: string }) => ({
+                        category: t.category,
+                        name: t.choice,
+                        reason: t.reasoning,
+                    })) || [],
                 };
 
                 set({

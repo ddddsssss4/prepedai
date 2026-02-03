@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { PhaseCard } from './PhaseCard';
 import { StepDetailDialog } from './StepDetailDialog';
 import { ClarificationTab } from './ClarificationTab';
+import { ArchitectureTab } from './ArchitectureTab';
 import { Phase, Step } from '../types/schemas';
-import { Zap, Layers, FileCode, ListChecks, Database, Server, Component, Activity, HelpCircle } from 'lucide-react';
+import { Zap, Layers, FileCode, ListChecks, Database, Server, Component, HelpCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mermaid } from './Mermaid';
 import { Badge } from '@/components/ui/badge';
@@ -61,40 +62,7 @@ export default function PlanningScreen() {
 
                 {/* ARCHITECTURE TAB */}
                 <TabsContent value="architecture" className="flex-1 space-y-6 focus-visible:ring-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-                        <div className="lg:col-span-2 rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 min-h-[400px]">
-                            <div className="flex items-center space-x-2 mb-4">
-                                <Activity className="h-5 w-5 text-primary" />
-                                <h3 className="text-lg font-semibold">High-Level Design</h3>
-                            </div>
-                            {plan.architecture ? (
-                                <Mermaid chart={plan.architecture.diagram} className="h-full w-full" />
-                            ) : (
-                                <div className="text-muted-foreground">No architecture diagram available.</div>
-                            )}
-                        </div>
-                        <div className="space-y-6">
-                            <div className="rounded-xl border border-white/10 bg-card p-6">
-                                <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Design Patterns</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {plan.architecture?.patterns.map((p, i) => (
-                                        <Badge key={i} variant="outline" className="text-sm py-1 px-3 border-white/10 hover:bg-white/5">{p}</Badge>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="rounded-xl border border-white/10 bg-card p-6 flex-1">
-                                <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Trade-offs</h3>
-                                <ul className="space-y-3">
-                                    {plan.architecture?.tradeoffs.map((t, i) => (
-                                        <li key={i} className="text-sm text-foreground/80 flex items-start">
-                                            <span className="mr-3 text-primary">•</span>
-                                            {t}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                    <ArchitectureTab />
                 </TabsContent>
 
                 {/* DATABASE TAB */}

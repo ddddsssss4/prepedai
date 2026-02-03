@@ -18,103 +18,41 @@ const RequestSchema = z.object({
     clarifications: z.array(ClarificationSchema).default([]),
 });
 
-// Full architecture response type
+// Architecture response type matching the new prompt structure
 interface ArchitectureResponse {
     architecture: {
-        problem_context: {
-            use_case: string;
-            scale_assumptions: {
-                users: string;
-                requests_per_second: string;
-                data_growth: string;
-            };
+        problem_understanding: {
+            core_problem: string;
+            key_challenges: string[];
+            assumptions: string[];
         };
-        entry_layer: {
-            dns: string;
-            cdn: {
-                enabled: boolean;
-                provider: string;
-                cached_assets: string[];
-            };
-            tls_termination: string;
+        overview: {
+            summary: string;
+            architecture_style: string;
+            key_principles: string[];
         };
-        traffic_management: {
-            load_balancer: {
-                type: string;
-                tool: string;
-            };
-            rate_limiter: {
-                enabled: boolean;
-                strategy: string;
-                location: string;
-            };
+        components: {
+            name: string;
+            purpose: string;
+            justification: string;
+            technologies: string[];
+        }[];
+        data_flow: {
+            description: string;
+            steps: string[];
         };
-        api_gateway: {
-            enabled: boolean;
-            responsibilities: string[];
-        };
-        application_layer: {
-            services: {
-                name: string;
-                responsibility: string;
-                scaling: string;
-            }[];
-        };
-        background_processing: {
-            message_queue: {
-                tool: string;
-                use_cases: string[];
-            };
-            cron_jobs: {
-                name: string;
-                schedule: string;
-                task: string;
-            }[];
-        };
-        caching_layer: {
-            tool: string;
-            use_cases: string[];
-            eviction_policy: string;
-        };
-        data_layer: {
-            primary_database: {
-                type: string;
-                tool: string;
-                replication: string;
-                sharding: string;
-            };
-            read_replicas: {
-                enabled: boolean;
-                count: number;
-            };
-        };
-        observability: {
-            logging: string;
-            metrics: string;
-            tracing: string;
-            alerting: string;
-        };
-        security: {
-            authentication: string;
-            authorization: string;
-            data_encryption: {
-                at_rest: boolean;
-                in_transit: boolean;
-            };
-        };
-        failure_handling: {
-            circuit_breaker: boolean;
-            retries: {
-                enabled: boolean;
-                strategy: string;
-            };
-            fallbacks: string[];
-        };
-        mermaid_diagram: string;
+        technology_choices: {
+            category: string;
+            choice: string;
+            reasoning: string;
+        }[];
         tradeoffs: {
             decision: string;
-            reason: string;
+            benefit: string;
+            cost: string;
+            alternative: string;
         }[];
+        mermaid_diagram: string;
     };
 }
 
@@ -144,6 +82,13 @@ router.post('/', async (req: Request, res: Response) => {
         );
 
         console.log('[Architecture] Generated successfully');
+
+        // Ensure tradeoffs is always an array
+        if (result.architecture) {
+            result.architecture.tradeoffs = result.architecture.tradeoffs || [];
+            result.architecture.components = result.architecture.components || [];
+            result.architecture.technology_choices = result.architecture.technology_choices || [];
+        }
 
         return res.json({
             success: true,
