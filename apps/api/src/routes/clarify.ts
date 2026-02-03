@@ -1,44 +1,47 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { chatJSON } from '../lib/llm';
 import { CLARIFY_SYSTEM_PROMPT, buildClarifyPrompt } from '../prompts/clarify.prompt';
 
-const clarifyRoute = new Hono();
+const router = Router();
 
 const RequestSchema = z.object({
     prompt: z.string().min(10, 'Prompt must be at least 10 characters'),
 });
 
-clarifyRoute.post('/', zValidator('json', RequestSchema), async (c) => {
-    const { prompt } = c.req.valid('json');
-
+router.post('/', async (req: Request, res: Response) => {
     try {
+        const validation = RequestSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                error: validation.error.issues[0]?.message || 'Invalid request',
+            });
+        }
+
+        const { prompt } = validation.data;
+
+        console.log('[Clarify] Generating questions for:', prompt);
+
         const questions = await chatJSON<string[]>(buildClarifyPrompt(prompt), {
-            system: CLARIFY_SYSTEM_PROMPT,
+            systemPrompt: CLARIFY_SYSTEM_PROMPT,
             temperature: 0.7,
         });
 
-        return c.json({
+        console.log('[Clarify] Generated questions:', questions);
+
+        return res.json({
             success: true,
             questions: Array.isArray(questions) ? questions : [],
         });
     } catch (error) {
-        console.error('Clarify error:', error);
-        return c.json(
-            {
-                success: false,
-                error: 'Failed to generate clarifying questions',
-                questions: [
-                    'What is the expected scale of users for this system?',
-                    'Are there any specific technology preferences or constraints?',
-                    'What integrations with external services are needed?',
-                    'What is the timeline for this project?',
-                ],
-            },
-            500
-        );
+        console.error('[Clarify] Error:', error);
+        return res.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to generate questions',
+        });
     }
 });
 
-export default clarifyRoute;
+export default router;

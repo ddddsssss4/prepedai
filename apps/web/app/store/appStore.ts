@@ -23,6 +23,7 @@ interface AppState {
     // Clarification flow
     clarifications: Clarification[];
     clarificationStatus: ClarificationStatus;
+    clarificationError: string | null;
     fetchClarifyingQuestions: () => Promise<void>;
     updateClarificationAnswer: (index: number, answer: string) => void;
     submitClarificationsAndGenerateArchitecture: () => Promise<void>;
@@ -51,6 +52,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     executionProgress: 0,
     clarifications: [],
     clarificationStatus: 'idle',
+    clarificationError: null,
 
     // Actions
     setCurrentScreen: (screen) => set({ currentScreen: screen }),
@@ -65,12 +67,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ plan: newPlan, currentScreen: 'planning' });
     },
 
-    // Clarification flow
+    // Clarification flow - ALL from LLM, no fallbacks
     fetchClarifyingQuestions: async () => {
         const { intent } = get();
         if (!intent.trim()) return;
 
-        set({ clarificationStatus: 'loading' });
+        set({ clarificationStatus: 'loading', clarificationError: null });
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/clarify`, {
@@ -81,31 +83,28 @@ export const useAppStore = create<AppState>((set, get) => ({
 
             const data = await response.json();
 
-            if (data.success && data.questions) {
+            if (data.success && data.questions && data.questions.length > 0) {
                 const clarifications: Clarification[] = data.questions.map((q: string) => ({
                     question: q,
                     answer: '',
                 }));
-                set({ clarifications, clarificationStatus: 'ready' });
+                set({ clarifications, clarificationStatus: 'ready', clarificationError: null });
             } else {
-                // Fallback questions if API fails
+                // No fallback - show error
                 set({
-                    clarifications: [
-                        { question: 'What is the expected scale of users?', answer: '' },
-                        { question: 'Are there specific technology preferences?', answer: '' },
-                        { question: 'What integrations are required?', answer: '' },
-                    ],
+                    clarifications: [],
                     clarificationStatus: 'ready',
+                    clarificationError: data.error || 'Failed to generate questions. Is LM Studio running?',
                 });
             }
         } catch (error) {
             console.error('Failed to fetch clarifying questions:', error);
             set({
-                clarifications: [
-                    { question: 'What is the expected scale of users?', answer: '' },
-                    { question: 'Are there specific technology preferences?', answer: '' },
-                ],
+                clarifications: [],
                 clarificationStatus: 'ready',
+                clarificationError: error instanceof Error
+                    ? `LLM Error: ${error.message}`
+                    : 'Failed to connect to LLM. Make sure LM Studio is running on localhost:1234',
             });
         }
     },
@@ -122,7 +121,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     submitClarificationsAndGenerateArchitecture: async () => {
         const { intent, clarifications, plan } = get();
 
-        set({ clarificationStatus: 'loading' });
+        set({ clarificationStatus: 'loading', clarificationError: null });
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/architecture`, {
@@ -142,7 +141,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 // Generate the base plan first if not exists
                 const basePlan = plan || generatePlan(intent);
 
-                // Update plan with real architecture data
+                // Update plan with real architecture data from LLM
                 const updatedPlan: Plan = {
                     ...basePlan,
                     clarifications,
@@ -155,7 +154,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                         ) || [],
                     },
                     database: {
-                        diagram: '', // Will be generated separately or from data_layer
+                        diagram: '', // Will be generated separately
                         models: [
                             {
                                 name: arch.data_layer?.primary_database?.tool || 'Database',
@@ -184,25 +183,22 @@ export const useAppStore = create<AppState>((set, get) => ({
                 set({
                     plan: updatedPlan,
                     clarificationStatus: 'completed',
-                    currentScreen: 'planning',
+                    clarificationError: null,
                 });
             } else {
-                // Fallback to local generation
-                const basePlan = plan || generatePlan(intent);
+                // No fallback - show error
                 set({
-                    plan: { ...basePlan, clarifications, clarificationStatus: 'completed' },
                     clarificationStatus: 'completed',
-                    currentScreen: 'planning',
+                    clarificationError: data.error || 'Failed to generate architecture. Check LM Studio.',
                 });
             }
         } catch (error) {
             console.error('Failed to generate architecture:', error);
-            // Fallback to local generation
-            const basePlan = plan || generatePlan(intent);
             set({
-                plan: { ...basePlan, clarifications, clarificationStatus: 'completed' },
                 clarificationStatus: 'completed',
-                currentScreen: 'planning',
+                clarificationError: error instanceof Error
+                    ? `Architecture Error: ${error.message}`
+                    : 'Failed to connect to LLM for architecture generation.',
             });
         }
     },
@@ -249,7 +245,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         const phases = [...plan.phases];
         const [removed] = phases.splice(fromIndex, 1);
-        phases.splice(toIndex, 0, removed);
+        if (removed) {
+            phases.splice(toIndex, 0, removed);
+        }
 
         set({ plan: { ...plan, phases } });
     },
@@ -306,6 +304,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             executionProgress: 0,
             clarifications: [],
             clarificationStatus: 'idle',
+            clarificationError: null,
         });
     },
 }));

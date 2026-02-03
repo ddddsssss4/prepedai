@@ -1,5 +1,4 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { chatJSON } from '../lib/llm';
 import {
@@ -7,7 +6,7 @@ import {
     buildArchitecturePrompt,
 } from '../prompts/architecture.prompt';
 
-const architectureRoute = new Hono();
+const router = Router();
 
 const ClarificationSchema = z.object({
     question: z.string(),
@@ -119,34 +118,44 @@ interface ArchitectureResponse {
     };
 }
 
-architectureRoute.post('/', zValidator('json', RequestSchema), async (c) => {
-    const { prompt, clarifications } = c.req.valid('json');
-
+router.post('/', async (req: Request, res: Response) => {
     try {
+        const validation = RequestSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                error: validation.error.issues[0]?.message || 'Invalid request',
+            });
+        }
+
+        const { prompt, clarifications } = validation.data;
+
+        console.log('[Architecture] Generating for:', prompt);
+        console.log('[Architecture] With clarifications:', clarifications.length);
+
         const result = await chatJSON<ArchitectureResponse>(
             buildArchitecturePrompt(prompt, clarifications),
             {
-                system: ARCHITECTURE_SYSTEM_PROMPT,
+                systemPrompt: ARCHITECTURE_SYSTEM_PROMPT,
                 temperature: 0.4,
                 maxTokens: 8192,
             }
         );
 
-        return c.json({
+        console.log('[Architecture] Generated successfully');
+
+        return res.json({
             success: true,
             ...result,
         });
     } catch (error) {
-        console.error('Architecture generation error:', error);
-        return c.json(
-            {
-                success: false,
-                error: 'Failed to generate architecture',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            },
-            500
-        );
+        console.error('[Architecture] Error:', error);
+        return res.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to generate architecture',
+        });
     }
 });
 
-export default architectureRoute;
+export default router;
