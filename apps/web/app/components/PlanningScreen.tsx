@@ -20,10 +20,8 @@ function isTabUnlocked(tabStep: GenerationStep, currentStep: GenerationStep): bo
 }
 
 export default function PlanningScreen() {
-    const { generationStep } = useAppStore();
-
-    // Default to clarification tab
-    const [activeTab, setActiveTab] = useState('clarification');
+    // Use global active tab state for auto-switching
+    const { activeTab, setActiveTab, generationStep } = useAppStore();
 
 
 
@@ -41,7 +39,7 @@ export default function PlanningScreen() {
                 </h1>
             </div>
 
-            <Tabs defaultValue="clarification" className="flex-1 flex flex-col space-y-8" onValueChange={setActiveTab}>
+            <Tabs value={activeTab} className="flex-1 flex flex-col space-y-8" onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-5 bg-muted/20 backdrop-blur-sm p-1">
                     <TabsTrigger
                         value="clarification"

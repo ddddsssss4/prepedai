@@ -33,6 +33,10 @@ interface AppState {
     generationStep: GenerationStep;
     setGenerationStep: (step: GenerationStep) => void;
 
+    // Active Tab tracking
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
+
     // Streaming state per layer
     architectureStream: StreamingState;
     databaseStream: StreamingState;
@@ -154,10 +158,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     clarificationStatus: 'idle',
     clarificationError: null,
     generationStep: 'idle',
+    activeTab: 'clarification',
     architectureStream: { ...initialStreamState },
     databaseStream: { ...initialStreamState },
     apiStream: { ...initialStreamState },
     blueprintStream: { ...initialStreamState },
+
+    // Actions
+    setActiveTab: (tab) => set({ activeTab: tab }),
 
     // Actions
     setCurrentScreen: (screen) => set({ currentScreen: screen }),
@@ -234,6 +242,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         set({
             generationStep: 'architecture',
+            activeTab: 'architecture',
             architectureStream: { isStreaming: true, content: '', error: null },
         });
 
@@ -289,6 +298,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         set({
             generationStep: 'database',
+            activeTab: 'database',
             databaseStream: { isStreaming: true, content: '', error: null },
         });
 
@@ -335,6 +345,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         set({
             generationStep: 'api',
+            activeTab: 'api',
             apiStream: { isStreaming: true, content: '', error: null },
         });
 
@@ -386,6 +397,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         set({
             generationStep: 'complete', // Move to blueprint view
+            activeTab: 'blueprint',
             blueprintStream: { isStreaming: true, content: '', error: null },
         });
 
