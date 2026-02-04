@@ -10,10 +10,10 @@ export function Navbar() {
         <header className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-background/60 backdrop-blur-xl backdrop-saturate-150 sticky top-0 z-50">
             <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center h-10 w-10 bg-muted rounded-md border border-border">
-                    <span className="font-mono font-bold text-lg text-foreground">T</span>
+                    <span className="font-mono font-bold text-lg text-foreground">P</span>
                 </div>
                 <div className="flex flex-col">
-                    <span className="font-bold text-lg leading-tight tracking-tight">Traycer AI</span>
+                    <span className="font-bold text-lg leading-tight tracking-tight">PrepedAI</span>
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Planning & Orchestration Layer</span>
                 </div>
             </div>

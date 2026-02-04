@@ -83,7 +83,7 @@ export default function IntentScreen() {
                     </h1>
 
                     <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                        Tell Traycer what you want to build. We analyze it, break it into phases, and create a
+                        Tell PrepedAI what you want to build. We analyze it, break it into phases, and create a
                         structured execution plan—pure orchestration, no fluff.
                     </p>
                 </div>

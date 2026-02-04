@@ -1,4 +1,4 @@
-// Type definitions and Zod schemas for Traycer AI
+// Type definitions and Zod schemas for PrepedAI
 
 import { z } from 'zod';
 

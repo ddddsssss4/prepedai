@@ -13,7 +13,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Traycer AI - Planning & Orchestration Layer",
+  title: "PrepedAI - Planning & Orchestration Layer",
   description: "Transform your intent into structured plans with intelligent orchestration",
 };
 
