@@ -65,15 +65,33 @@ export function BlueprintTab() {
         );
     }
 
-    // Streaming state - show real-time content like other layers
+    // Streaming state - show elegant loading like other layers (no raw JSON)
     if (blueprintStream.isStreaming || (blueprintStream.content && (!plan?.phases?.length))) {
         return (
-            <div className="space-y-6">
-                {/* Streaming indicator */}
-                <div className="flex items-center gap-2 text-primary animate-pulse bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="flex flex-col items-center justify-center py-24 space-y-8">
+                {/* Animated loader */}
+                <div className="relative">
+                    <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+                    <div className="relative rounded-full bg-primary/10 p-6">
+                        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                    </div>
+                </div>
+
+                {/* Status message */}
+                <div className="text-center space-y-3 max-w-md">
+                    <h3 className="text-xl font-semibold">Generating Execution Blueprint</h3>
+                    <p className="text-muted-foreground">
+                        Analyzing your architecture, database schema, and API design to create a detailed step-by-step implementation plan...
+                    </p>
+                </div>
+
+                {/* Progress indicator */}
+                <div className="flex items-center gap-2 text-primary/80 animate-pulse">
+                    <ListChecks className="h-4 w-4" />
                     <span className="text-sm font-mono">
-                        {blueprintStream.isStreaming ? 'Generating execution blueprint...' : 'Parsing blueprint...'}
+                        {blueprintStream.content.length > 0
+                            ? `Processing ${Math.round(blueprintStream.content.length / 100)}+ tokens...`
+                            : 'Initializing...'}
                     </span>
                 </div>
 
@@ -81,19 +99,6 @@ export function BlueprintTab() {
                 {blueprintStream.error && (
                     <div className="flex items-center gap-2 text-red-500 bg-red-500/10 p-4 rounded-lg border border-red-500/20">
                         <span>⚠️ {blueprintStream.error}</span>
-                    </div>
-                )}
-
-                {/* Show streaming content in real-time */}
-                {blueprintStream.content && (
-                    <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-6 shadow-lg">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <ListChecks className="h-5 w-5 text-primary" />
-                            Blueprint Output
-                        </h3>
-                        <pre className="text-sm text-muted-foreground font-mono whitespace-pre-wrap bg-black/20 p-4 rounded-lg max-h-[500px] overflow-auto">
-                            {blueprintStream.content}
-                        </pre>
                     </div>
                 )}
             </div>
