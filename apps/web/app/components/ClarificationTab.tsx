@@ -92,7 +92,7 @@ export function ClarificationTab() {
                 {clarifications.map((clarification, index) => (
                     <div
                         key={index}
-                        className="rounded-xl border border-white/10 bg-card/50 backdrop-blur-sm p-6 space-y-4 transition-all hover:border-white/20"
+                        className="rounded-xl border border-neutral-200 dark:border-white/10 bg-card/50 backdrop-blur-sm p-6 space-y-4 transition-all hover:border-neutral-300 dark:hover:border-white/20"
                     >
                         <div className="flex items-start space-x-3">
                             <span className="flex items-center justify-center h-7 w-7 rounded-full bg-primary/20 text-primary text-sm font-bold">

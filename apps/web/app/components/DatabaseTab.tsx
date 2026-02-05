@@ -199,7 +199,7 @@ export function DatabaseTab() {
                     <div className="lg:col-span-2 space-y-6">
                         {/* ERD Diagram */}
                         {mermaidCode && (
-                            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-green-500/5 via-black/40 to-emerald-500/5 backdrop-blur-xl p-6 shadow-xl">
+                            <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-green-500/5 via-black/40 to-emerald-500/5 backdrop-blur-xl p-6 shadow-xl">
                                 <div className="flex items-center space-x-3 mb-4">
                                     <Link2 className="h-5 w-5 text-green-400" />
                                     <h3 className="text-lg font-semibold">Entity Relationship Diagram</h3>
@@ -209,7 +209,7 @@ export function DatabaseTab() {
                         )}
 
                         {/* Schema Details */}
-                        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-8 shadow-lg">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-8 shadow-lg">
                             <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown
                                     components={markdownComponents}

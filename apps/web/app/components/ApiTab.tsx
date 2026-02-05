@@ -196,7 +196,7 @@ export function ApiTab() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* API Content */}
                     <div className="lg:col-span-2">
-                        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-blue-500/5 via-card/80 to-indigo-500/5 backdrop-blur-sm p-8 shadow-lg">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-blue-500/5 via-card/80 to-indigo-500/5 backdrop-blur-sm p-8 shadow-lg">
                             <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown
                                     components={markdownComponents}

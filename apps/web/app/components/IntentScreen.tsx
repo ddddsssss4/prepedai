@@ -94,7 +94,7 @@ export default function IntentScreen() {
                         {/* Glow effect on hover */}
                         <div className={`absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-lg blur opacity-20 group-hover:opacity-60 transition duration-1000 ${error ? 'from-destructive/50 to-destructive/50 opacity-80' : ''}`}></div>
 
-                        <div className="relative rounded-none border border-white/10 bg-black/40 backdrop-blur-xl backdrop-saturate-150 shadow-2xl transition-all duration-300">
+                        <div className="relative rounded-xl border border-neutral-200 dark:border-white/10 bg-black/40 backdrop-blur-xl backdrop-saturate-150 shadow-2xl transition-all duration-300">
                             <Textarea
                                 ref={textareaRef}
                                 value={localIntent}

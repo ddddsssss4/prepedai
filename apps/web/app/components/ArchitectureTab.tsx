@@ -193,7 +193,7 @@ export function ArchitectureTab() {
                     <div className="lg:col-span-2 space-y-6">
                         {/* Diagram - Glassmorphism card */}
                         {mermaidCode && (
-                            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-purple-500/5 via-black/40 to-blue-500/5 backdrop-blur-xl p-6 shadow-xl">
+                            <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-purple-500/5 via-black/40 to-blue-500/5 backdrop-blur-xl p-6 shadow-xl">
                                 <div className="flex items-center gap-3 mb-4">
                                     <Workflow className="h-5 w-5 text-purple-400" />
                                     <h3 className="text-lg font-semibold">System Diagram</h3>
@@ -203,7 +203,7 @@ export function ArchitectureTab() {
                         )}
 
                         {/* Architecture details - Styled card */}
-                        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-8 shadow-lg">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-8 shadow-lg">
                             <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown
                                     components={markdownComponents}

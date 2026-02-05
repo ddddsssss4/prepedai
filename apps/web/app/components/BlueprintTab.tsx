@@ -86,7 +86,7 @@ export function BlueprintTab() {
 
                 {/* Show streaming content in real-time */}
                 {blueprintStream.content && (
-                    <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-6 shadow-lg">
+                    <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-white/5 via-card/80 to-white/5 backdrop-blur-sm p-6 shadow-lg">
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <ListChecks className="h-5 w-5 text-primary" />
                             Blueprint Output

@@ -26,7 +26,7 @@ export function PhaseSection({
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (
-        <div className="rounded-xl border border-white/10 bg-card/40 backdrop-blur-sm overflow-hidden">
+        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-card/40 backdrop-blur-sm overflow-hidden">
             {/* Phase Header */}
             <div
                 className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-primary/5 to-transparent cursor-pointer"
