@@ -224,7 +224,7 @@ export function DatabaseTab() {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Status card */}
-                        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-green-500/5 to-transparent p-6">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-green-500/5 to-transparent p-6 shadow-sm">
                             <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Status</h3>
                             <div className="flex items-center gap-2">
                                 {isComplete ? (
@@ -243,7 +243,7 @@ export function DatabaseTab() {
 
                         {/* Next step */}
                         {isComplete && (
-                            <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/5 p-6">
+                            <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/5 p-6 shadow-md">
                                 <h3 className="text-sm font-mono uppercase tracking-wider text-green-400 mb-4">Next Step</h3>
                                 <p className="text-sm text-muted-foreground mb-4">
                                     Database schema is ready. Proceed to API design.
@@ -259,7 +259,7 @@ export function DatabaseTab() {
                         )}
 
                         {/* Tips */}
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white/5 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <AlertCircle className="h-4 w-4 text-green-400" />
                                 <h3 className="text-sm font-semibold">Database Tips</h3>

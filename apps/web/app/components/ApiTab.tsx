@@ -211,7 +211,7 @@ export function ApiTab() {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Status card */}
-                        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-blue-500/5 to-transparent p-6">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-blue-500/5 to-transparent p-6 shadow-sm">
                             <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Status</h3>
                             <div className="flex items-center gap-2">
                                 {isComplete ? (
@@ -230,7 +230,7 @@ export function ApiTab() {
 
                         {/* Completion card */}
                         {isComplete && (
-                            <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/5 p-6">
+                            <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/10 to-emerald-500/5 p-6 shadow-md">
                                 <h3 className="text-sm font-mono uppercase tracking-wider text-green-400 mb-4">All Done!</h3>
                                 <p className="text-sm text-muted-foreground mb-4">
                                     Your system design is complete. Review the Blueprint tab for the full execution plan.
@@ -243,7 +243,7 @@ export function ApiTab() {
                         )}
 
                         {/* Tips */}
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white/5 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <AlertCircle className="h-4 w-4 text-blue-400" />
                                 <h3 className="text-sm font-semibold">API Tips</h3>
@@ -257,7 +257,7 @@ export function ApiTab() {
                         </div>
 
                         {/* Security reminder */}
-                        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+                        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <Lock className="h-4 w-4 text-yellow-400" />
                                 <h3 className="text-sm font-semibold text-yellow-400">Security</h3>

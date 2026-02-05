@@ -112,7 +112,7 @@ export default function IntentScreen() {
                                     onClick={handleSubmit}
                                     disabled={!localIntent.trim() || isGenerating}
                                     size="lg"
-                                    className="rounded-none bg-white/10 hover:bg-white/20 text-foreground border border-white/10 backdrop-blur-md transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                                    className="rounded-lg bg-white/10 hover:bg-white/20 text-foreground border border-white/10 backdrop-blur-md transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                                 >
                                     {isGenerating ? (
                                         <>Generating <span className="animate-pulse">...</span></>
@@ -131,7 +131,7 @@ export default function IntentScreen() {
                                 <button
                                     key={i}
                                     onClick={() => setLocalIntent(prompt)}
-                                    className="flex items-center justify-between p-4 text-left border border-white/5 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 group rounded-none hover:border-white/10"
+                                    className="flex items-center justify-between p-4 text-left border border-neutral-200 dark:border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 group rounded-lg shadow-sm hover:shadow-md hover:border-neutral-300 dark:hover:border-white/20"
                                 >
                                     <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                                         {prompt}
@@ -153,7 +153,7 @@ export default function IntentScreen() {
                             { name: 'Ollama', status: 'Active', color: 'text-emerald-500' },
                             { name: 'Local LLM', status: 'Setup Required', color: 'text-amber-500' }
                         ].map((provider) => (
-                            <div key={provider.name} className="p-4 bg-white/5 border border-white/10 backdrop-blur-sm rounded-none hover:bg-white/10 transition-colors">
+                            <div key={provider.name} className="p-4 bg-white/5 border border-neutral-200 dark:border-white/10 backdrop-blur-sm rounded-lg shadow-sm hover:bg-white/10 hover:shadow-md transition-all">
                                 <div className="font-bold text-foreground">{provider.name}</div>
                                 <div className={`text-xs font-mono mt-1 ${provider.color}`}>{provider.status}</div>
                             </div>

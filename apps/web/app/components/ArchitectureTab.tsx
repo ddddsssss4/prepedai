@@ -218,7 +218,7 @@ export function ArchitectureTab() {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Status card */}
-                        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-green-500/5 to-transparent p-6">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-gradient-to-br from-green-500/5 to-transparent p-6 shadow-sm">
                             <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-4">Status</h3>
                             <div className="flex items-center gap-2">
                                 {isComplete ? (
@@ -237,7 +237,7 @@ export function ArchitectureTab() {
 
                         {/* Next step */}
                         {isComplete && (
-                            <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-purple-500/5 p-6">
+                            <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-purple-500/5 p-6 shadow-md">
                                 <h3 className="text-sm font-mono uppercase tracking-wider text-primary mb-4">Next Step</h3>
                                 <p className="text-sm text-muted-foreground mb-4">
                                     Architecture is complete. Proceed to Database design.
@@ -253,7 +253,7 @@ export function ArchitectureTab() {
                         )}
 
                         {/* Tips card */}
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+                        <div className="rounded-xl border border-neutral-200 dark:border-white/10 bg-white/5 p-6 shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <AlertCircle className="h-4 w-4 text-blue-400" />
                                 <h3 className="text-sm font-semibold">Tips</h3>
