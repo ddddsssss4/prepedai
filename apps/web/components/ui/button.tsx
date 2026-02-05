@@ -12,12 +12,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = "default", size = "default", ...props }, ref) => {
 
         const variants = {
-            default: "bg-primary text-primary-foreground hover:bg-primary/90",
+            default: "bg-primary text-primary-foreground hover:bg-primary/90 backdrop-blur-sm",
             destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-            outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-            secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-            ghost: "hover:bg-accent hover:text-accent-foreground",
-            link: "text-primary underline-offset-4 hover:underline",
+            outline: "border border-neutral-200/50 dark:border-white/20 bg-white/50 dark:bg-white/5 backdrop-blur-xl hover:bg-white/70 dark:hover:bg-white/10 hover:text-accent-foreground",
+            secondary: "bg-white/60 dark:bg-white/10 text-secondary-foreground hover:bg-white/80 dark:hover:bg-white/20 backdrop-blur-xl border border-neutral-200/50 dark:border-white/10",
+            ghost: "hover:bg-white/50 dark:hover:bg-white/10 hover:text-accent-foreground backdrop-blur-sm",
+            link: "text-primary underline-offset-4 hover:underline shadow-none",
         }
 
         const sizes = {

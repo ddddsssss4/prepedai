@@ -1,135 +1,163 @@
-# Turborepo starter
+# 🚀 PrepedAI - AI-Powered System Design Tool
 
-This Turborepo starter is maintained by the Turborepo core team.
+An intelligent system design assistant that transforms natural language descriptions into comprehensive architecture blueprints, database schemas, and API specifications.
 
-## Using this example
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![Express](https://img.shields.io/badge/Express-4-green?style=flat-square&logo=express)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Qwen](https://img.shields.io/badge/Qwen-2.5-purple?style=flat-square)
 
-Run the following command:
+## ✨ Features
 
-```sh
-npx create-turbo@latest
-```
+- 🧠 **AI-Powered Design** - Generate system architectures from plain English
+- 📡 **Real-Time Streaming** - SSE-based streaming for instant feedback
+- 🏗️ **Architecture Diagrams** - Auto-generated Mermaid flowcharts
+- 🗄️ **Database Schemas** - ERD diagrams with relationships
+- 🔌 **API Specifications** - RESTful endpoint documentation
+- 📋 **Blueprint Generation** - Step-by-step implementation plans
+- 🎨 **Glassmorphism UI** - Modern, premium design aesthetic
 
-## What's inside?
+## 🛠️ Tech Stack
 
-This Turborepo includes the following packages/apps:
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Next.js 15, React 18, Tailwind CSS |
+| **Backend** | Express.js |
+| **State** | Zustand |
+| **AI** | Qwen 2.5 (via LM Studio) |
+| **Diagrams** | Mermaid.js |
+| **Monorepo** | Turborepo |
+| **Package Manager** | Bun |
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## 📦 Project Structure
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+prepedai/
+├── apps/
+│   ├── web/          # Next.js frontend
+│   └── api/          # Hono.js backend
+├── packages/
+│   ├── ui/           # Shared UI components
+│   ├── eslint-config/
+│   └── typescript-config/
+└── turbo.json
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## 🚀 Getting Started
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+### Prerequisites
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+- [Bun](https://bun.sh/) (v1.0+)
+- [LM Studio](https://lmstudio.ai/) with Qwen 2.5 model running locally
 
-### Develop
+### Installation
 
-To develop all apps and packages, run the following command:
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/prepedai.git
+cd prepedai
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+# Install dependencies
+bun install
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Environment Setup
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+Create `.env` files in the respective app directories:
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+**apps/api/.env**
+```env
+LLM_API_URL=http://localhost:1234/v1  # LM Studio endpoint
 ```
 
-### Remote Caching
+### Running the App
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+```bash
+# Start both frontend and backend
+bun run dev
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+# Or run individually
+bun run dev --filter=web    # Frontend on http://localhost:3000
+bun run dev --filter=api    # Backend on http://localhost:3001
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## 🔄 How It Works
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant Qwen as Qwen 2.5
 
+    User->>Frontend: Describe system
+    Frontend->>Backend: POST /generate
+    Backend->>Qwen: Stream request
+    Qwen-->>Backend: SSE chunks
+    Backend-->>Frontend: Stream response
+    Frontend->>User: Real-time updates
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+1. **Intent Input** - User describes what they want to build
+2. **Clarification** - AI asks targeted questions to understand requirements
+3. **Architecture** - Generates system component diagrams
+4. **Database** - Creates ERD with tables and relationships
+5. **API Design** - Documents endpoints with request/response schemas
+6. **Blueprint** - Produces step-by-step implementation plan
+
+## 📡 SSE Streaming
+
+Real-time streaming using Server-Sent Events for responsive UX:
+
+```typescript
+// Backend streams chunks
+const stream = new ReadableStream({
+  async start(controller) {
+    for await (const chunk of llmResponse) {
+      controller.enqueue(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+    }
+  }
+});
+
+// Frontend consumes
+const eventSource = new EventSource('/api/stream');
+eventSource.onmessage = (e) => updateUI(JSON.parse(e.data));
 ```
 
-## Useful Links
+## 🎨 UI Design
 
-Learn more about the power of Turborepo:
+- **Glassmorphism** - Frosted glass effects with `backdrop-blur-xl`
+- **Dark/Light Mode** - Full theme support
+- **Progressive Disclosure** - Tabbed interface reveals content as generated
+- **Micro-animations** - Smooth transitions and loading states
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+## 🔮 Future Improvements
+
+- [ ] Persistent storage with database
+- [ ] User authentication
+- [ ] Multiple LLM provider support (Gemini, OpenAI, Claude)
+- [ ] Export to PDF/image
+- [ ] Collaborative editing
+- [ ] Rate limiting
+- [ ] WebSocket for bi-directional communication
+
+## 📝 Scripts
+
+```bash
+bun run dev       # Start development servers
+bun run build     # Build all packages
+bun run lint      # Run ESLint
+bun run type-check # TypeScript validation
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+MIT License - feel free to use this project for learning and development.
+
+---
+
+Built with ❤️ using Next.js, Express, and Qwen 2.5
